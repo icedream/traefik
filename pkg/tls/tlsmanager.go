@@ -9,6 +9,7 @@ import (
 	"sync"
 
 	"github.com/containous/traefik/v2/pkg/log"
+	"github.com/containous/traefik/v2/pkg/tls/certificate"
 	"github.com/containous/traefik/v2/pkg/tls/generate"
 	"github.com/containous/traefik/v2/pkg/types"
 	"github.com/go-acme/lego/v3/challenge/tlsalpn01"
@@ -58,7 +59,7 @@ func (m *Manager) UpdateConfigs(ctx context.Context, stores map[string]Store, co
 		m.stores[storeName] = store
 	}
 
-	storesCertificates := make(map[string]map[string]*tls.Certificate)
+	storesCertificates := make(map[string]map[certificateKey]*tls.Certificate)
 	for _, conf := range certs {
 		if len(conf.Stores) == 0 {
 			if log.GetLevel() >= logrus.DebugLevel {
@@ -127,7 +128,7 @@ func (m *Manager) Get(storeName string, configName string) (*tls.Config, error) 
 		}
 
 		log.WithoutContext().Debugf("Serving default certificate for request: %q", domainToCheck)
-		return store.DefaultCertificate, nil
+		return store.DefaultCertificates[getCertTypeForClientHello(clientHello)], nil
 	}
 
 	return tlsConfig, err
@@ -153,19 +154,32 @@ func buildCertificateStore(ctx context.Context, tlsStore Store) (*CertificateSto
 	certificateStore := NewCertificateStore()
 	certificateStore.DynamicCerts.Set(make(map[string]*tls.Certificate))
 
-	if tlsStore.DefaultCertificate != nil {
+	if len(tlsStore.DefaultCertificates) > 0 {
+		cert, err := buildDefaultCertificates(tlsStore.DefaultCertificates)
+		if err != nil {
+			return certificateStore, err
+		}
+		certificateStore.DefaultCertificates = cert
+	} else if tlsStore.DefaultCertificate != nil {
 		cert, err := buildDefaultCertificate(tlsStore.DefaultCertificate)
 		if err != nil {
 			return certificateStore, err
 		}
-		certificateStore.DefaultCertificate = cert
+		certificateStore.DefaultCertificates = []*tls.Certificate{cert}
 	} else {
-		log.FromContext(ctx).Debug("No default certificate, generating one")
-		cert, err := generate.DefaultCertificate()
+		log.FromContext(ctx).Debug("No default certificates configured, generating")
+		rsaCert, err := generate.DefaultCertificate(certificate.RSA)
 		if err != nil {
 			return certificateStore, err
 		}
-		certificateStore.DefaultCertificate = cert
+		ecCert, err := generate.DefaultCertificate(certificate.EC)
+		if err != nil {
+			return certificateStore, err
+		}
+		certificateStore.DefaultCertificates = []*tls.Certificate{
+			rsaCert,
+			ecCert,
+		}
 	}
 	return certificateStore, nil
 }
@@ -278,4 +292,16 @@ func buildDefaultCertificate(defaultCertificate *Certificate) (*tls.Certificate,
 		return nil, fmt.Errorf("failed to load X509 key pair: %v", err)
 	}
 	return &cert, nil
+}
+
+func buildDefaultCertificates(defaultCertificates []*Certificate) ([]*tls.Certificate, error) {
+	certs := make([]*tls.Certificate, len(defaultCertificates))
+	for index, cert := range defaultCertificates {
+		builtCert, err := buildDefaultCertificate(cert)
+		if err != nil {
+			return nil, err
+		}
+		certs[index] = builtCert
+	}
+	return certs, nil
 }
