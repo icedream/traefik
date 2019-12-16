@@ -28,7 +28,8 @@ type Options struct {
 
 // Store holds the options for a given Store
 type Store struct {
-	DefaultCertificate *Certificate `json:"defaultCertificate,omitempty" toml:"defaultCertificate,omitempty" yaml:"defaultCertificate,omitempty"`
+	DefaultCertificate  *Certificate   `json:"defaultCertificate,omitempty" toml:"defaultCertificate,omitempty" yaml:"defaultCertificate,omitempty"`
+	DefaultCertificates []*Certificate `json:"defaultCertificates,omitempty" toml:"defaultCertificates,omitempty" yaml:"defaultCertificates,omitempty"`
 }
 
 // +k8s:deepcopy-gen=true
