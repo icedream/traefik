@@ -36,7 +36,8 @@ func (o *Options) SetDefaults() {
 
 // Store holds the options for a given Store.
 type Store struct {
-	DefaultCertificate *Certificate `json:"defaultCertificate,omitempty" toml:"defaultCertificate,omitempty" yaml:"defaultCertificate,omitempty" export:"true"`
+	DefaultCertificate  *Certificate   `json:"defaultCertificate,omitempty" toml:"defaultCertificate,omitempty" yaml:"defaultCertificate,omitempty" export:"true"`
+	DefaultCertificates []*Certificate `json:"defaultCertificates,omitempty" toml:"defaultCertificates,omitempty" yaml:"defaultCertificates,omitempty" export:"true"`
 }
 
 // +k8s:deepcopy-gen=true
