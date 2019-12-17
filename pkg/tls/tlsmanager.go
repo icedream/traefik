@@ -111,6 +111,8 @@ func (m *Manager) Get(storeName string, configName string) (*tls.Config, error) 
 	}
 
 	tlsConfig.GetConfigForClient = func(clientHello *tls.ClientHelloInfo) (*tls.Config, error) {
+		config := tlsConfig.Clone()
+
 		if tlsConfig.CipherSuites != nil && len(tlsConfig.CipherSuites) > 0 {
 			if clientHello.CipherSuites != nil && len(clientHello.CipherSuites) > 0 {
 				// does the client have hardware acceleration or does it prefer ChaCha?
@@ -124,8 +126,6 @@ func (m *Manager) Get(storeName string, configName string) (*tls.Config, error) 
 							forceCiphers = append(forceCiphers, cipherSuite)
 						}
 					}
-					config := new(tls.Config)
-					*config = *tlsConfig
 					config.CipherSuites = forceCiphers
 				newCipherSuitesLoop:
 					for _, cipherSuite := range tlsConfig.CipherSuites {
@@ -137,11 +137,11 @@ func (m *Manager) Get(storeName string, configName string) (*tls.Config, error) 
 							config.CipherSuites = append(config.CipherSuites, cipherSuite)
 						}
 					}
-					return config, nil
 				}
 			}
 		}
-		return nil, nil
+
+		return config, nil
 	}
 
 	tlsConfig.GetCertificate = func(clientHello *tls.ClientHelloInfo) (*tls.Certificate, error) {
