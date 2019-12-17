@@ -116,14 +116,17 @@ func derCert(privKey crypto.PrivateKey, expiration time.Time, domain string) ([]
 	}
 
 	var pubKey crypto.PublicKey
-	switch v := pubKey.(type) {
-	case ecdsa.PrivateKey:
-		pubKey = v.PublicKey
-	case ed25519.PrivateKey:
-		pubKey = v.Public()
-	case rsa.PrivateKey:
-		pubKey = v.PublicKey
+	switch v := privKey.(type) {
+	case *ecdsa.PrivateKey:
+		pubKey = &v.PublicKey
+	case *ed25519.PrivateKey:
+		edPubKey := v.Public()
+		pubKey = &edPubKey
+	case *rsa.PrivateKey:
+		pubKey = &v.PublicKey
+	default:
+		return nil, errors.New("Unknown public key algorithm")
 	}
 
-	return x509.CreateCertificate(rand.Reader, &template, &template, &pubKey, privKey)
+	return x509.CreateCertificate(rand.Reader, &template, &template, pubKey, privKey)
 }
