@@ -192,7 +192,7 @@ func (m *Manager) GetStore(storeName string) *CertificateStore {
 
 func buildCertificateStore(ctx context.Context, tlsStore Store) (*CertificateStore, error) {
 	certificateStore := NewCertificateStore()
-	certificateStore.DynamicCerts.Set(make(map[string]*tls.Certificate))
+	certificateStore.DynamicCerts.Set(make(map[certificateKey]*tls.Certificate))
 
 	if len(tlsStore.DefaultCertificates) > 0 {
 		cert, err := buildDefaultCertificates(tlsStore.DefaultCertificates)
