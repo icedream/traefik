@@ -54,7 +54,7 @@ func KeyPair(domain string, expiration time.Time, certType certificate.Certifica
 
 	switch certType {
 	case certificate.EC:
-		ecdsaPrivKey, err := ecdsa.GenerateKey(elliptic.P384(), rand.Reader)
+		ecdsaPrivKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
 		if err != nil {
 			return nil, nil, err
 		}
