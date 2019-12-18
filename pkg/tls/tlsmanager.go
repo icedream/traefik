@@ -147,7 +147,7 @@ func (m *Manager) Get(storeName string, configName string) (*tls.Config, error) 
 				}
 			}
 		}
-		return nil, nil
+		return matchingCert, nil
 	}
 
 	return tlsConfig, err
