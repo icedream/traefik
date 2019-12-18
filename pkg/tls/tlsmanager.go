@@ -2,6 +2,9 @@ package tls
 
 import (
 	"context"
+	"crypto/ecdsa"
+	"crypto/ed25519"
+	"crypto/rsa"
 	"crypto/tls"
 	"crypto/x509"
 	"errors"
@@ -169,12 +172,22 @@ func (m *Manager) Get(storeName string, configName string) (*tls.Config, error) 
 
 		log.WithoutContext().Debugf("Serving default certificate for request: %q", domainToCheck)
 		preferredType := getCertTypeForClientHello(clientHello)
-		cert, ok := store.DefaultCertificates[preferredType]
-		if !ok && preferredType != certificate.RSA {
-			// Fall back to using RSA certificate before just returning nil
-			cert, _ = store.DefaultCertificates[certificate.RSA]
+		var matchingCert *tls.Certificate
+		for _, cert := range store.DefaultCertificates {
+			switch cert.PrivateKey.(type) {
+			case *ecdsa.PrivateKey, *ed25519.PrivateKey:
+				if preferredType == certificate.EC {
+					return matchingCert, nil
+				}
+			case *rsa.PrivateKey:
+				if preferredType == certificate.RSA {
+					return matchingCert, nil
+				} else if matchingCert == nil {
+					matchingCert = cert
+				}
+			}
 		}
-		return cert, nil
+		return nil, nil
 	}
 
 	return tlsConfig, err
