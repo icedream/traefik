@@ -168,7 +168,13 @@ func (m *Manager) Get(storeName string, configName string) (*tls.Config, error) 
 		}
 
 		log.WithoutContext().Debugf("Serving default certificate for request: %q", domainToCheck)
-		return store.DefaultCertificates[getCertTypeForClientHello(clientHello)], nil
+		preferredType := getCertTypeForClientHello(clientHello)
+		cert, ok := store.DefaultCertificates[preferredType]
+		if !ok && preferredType != certificate.RSA {
+			// Fall back to using RSA certificate before just returning nil
+			cert, _ = store.DefaultCertificates[certificate.RSA]
+		}
+		return cert, nil
 	}
 
 	return tlsConfig, err
