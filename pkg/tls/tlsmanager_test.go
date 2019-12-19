@@ -377,3 +377,87 @@ func TestChaCha20(t *testing.T) {
 		})
 	}
 }
+
+func TestChaCha20(t *testing.T) {
+	tlsConfigs := map[string]Options{
+		"tls13_polyprefer": {
+			MinVersion: "VersionTLS13",
+			CipherSuites: []string{
+				"TLS_CHACHA20_POLY1305_SHA256",
+				"TLS_AES_256_GCM_SHA384",
+				"TLS_AES_128_GCM_SHA256",
+			},
+		},
+		"tls13": {
+			MinVersion: "VersionTLS13",
+			CipherSuites: []string{
+				"TLS_AES_256_GCM_SHA384",
+				"TLS_AES_128_GCM_SHA256",
+				"TLS_CHACHA20_POLY1305_SHA256",
+			},
+		},
+	}
+
+	testCases := []struct {
+		desc                       string
+		tlsOptionsName             string
+		shouldNotChangeTLSConfig   bool
+		cipherSuites               []uint16
+		expectPreferredCipherSuite uint16
+	}{
+		{
+			desc:           "Should use server-configured ChaCha cipher suite for ChaCha-preferring clients",
+			tlsOptionsName: "tls13",
+			cipherSuites: []uint16{
+				tls.TLS_CHACHA20_POLY1305_SHA256,
+				tls.TLS_AES_128_GCM_SHA256,
+				tls.TLS_AES_256_GCM_SHA384,
+			},
+			expectPreferredCipherSuite: tls.TLS_CHACHA20_POLY1305_SHA256,
+		},
+		{
+			desc:           "Should not change order of cipher suites for non-ChaCha-supporting clients",
+			tlsOptionsName: "tls13",
+			cipherSuites: []uint16{
+				tls.TLS_AES_128_GCM_SHA256,
+				tls.TLS_AES_256_GCM_SHA384,
+			},
+			shouldNotChangeTLSConfig: true,
+		},
+		{
+			desc:           "Should not change order of cipher suites for ChaCha-supporting clients",
+			tlsOptionsName: "tls13",
+			cipherSuites: []uint16{
+				tls.TLS_AES_128_GCM_SHA256,
+				tls.TLS_AES_256_GCM_SHA384,
+				tls.TLS_CHACHA20_POLY1305_SHA256,
+			},
+			shouldNotChangeTLSConfig: true,
+		},
+	}
+
+	tlsManager := NewManager()
+	tlsManager.UpdateConfigs(context.Background(), nil, tlsConfigs, nil)
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			config, err := tlsManager.Get("default", test.tlsOptionsName)
+			assert.NoError(t, err)
+
+			resultingConfig, err := config.GetConfigForClient(&tls.ClientHelloInfo{
+				CipherSuites: test.cipherSuites,
+			})
+			assert.NoError(t, err)
+			if test.shouldNotChangeTLSConfig {
+				assert.Nil(t, resultingConfig)
+				return
+			}
+			assert.NotNil(t, resultingConfig)
+			assert.NotEmpty(t, resultingConfig.CipherSuites)
+			assert.Equal(t, resultingConfig.CipherSuites[0], test.expectPreferredCipherSuite)
+		})
+	}
+}
