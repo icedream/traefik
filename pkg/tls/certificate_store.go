@@ -167,6 +167,7 @@ func (c CertificateStore) GetBestCertificate(clientHello *tls.ClientHelloInfo) *
 	if preferredCertType != certificate.RSA {
 		keyToCheck += certTypeDelimiter + preferredCertType.String()
 	}
+	log.WithoutContext().Debugf(">> Checking against cache key %s", keyToCheck)
 	if cert, ok := c.CertCache.Get(keyToCheck); ok {
 		return cert.(*tls.Certificate)
 	}
@@ -182,16 +183,20 @@ func (c CertificateStore) GetBestCertificate(clientHello *tls.ClientHelloInfo) *
 
 	if c.DynamicCerts != nil && c.DynamicCerts.Get() != nil {
 		for key, cert := range c.DynamicCerts.Get().(map[certificateKey]*tls.Certificate) {
+			log.WithoutContext().Debugf("Checking %s vs. %s", keyToCheck, key)
 			domains := key.hostname
 
 			// Compatible certificate?
 			if _, ok := matchedCerts[key.certType]; !ok {
+				log.WithoutContext().Debugf(">> incompatible type %s", key.certType)
 				continue
 			}
 
 			// Requested domain found in certificate?
 			for _, certDomain := range strings.Split(domains, ",") {
-				if MatchDomain(domainToCheck, certDomain) {
+				v := MatchDomain(domainToCheck, certDomain)
+				if v {
+					log.WithoutContext().Debugf(">> Qualifying certificate of type %s for domain %s", key.certType, certDomain)
 					matchedCerts[key.certType][certDomain] = cert
 				}
 			}
@@ -200,6 +205,7 @@ func (c CertificateStore) GetBestCertificate(clientHello *tls.ClientHelloInfo) *
 
 	for _, currentCertType := range certTypePreferences {
 		matchedCertsForCurrentCertType := matchedCerts[currentCertType]
+		log.WithoutContext().Debugf(">> %d certificates for %s", len(matchedCertsForCurrentCertType), currentCertType)
 		if len(matchedCertsForCurrentCertType) > 0 {
 			// sort map by keys
 			keys := []string{}
@@ -207,8 +213,10 @@ func (c CertificateStore) GetBestCertificate(clientHello *tls.ClientHelloInfo) *
 				keys = append(keys, key)
 			}
 			sort.Strings(keys)
+			log.WithoutContext().Debugf(">> Sorted keys: %+v", keys)
 
 			// cache best match
+			log.WithoutContext().Debugf(">> Setting cache key %s", keyToCheck)
 			c.CertCache.SetDefault(keyToCheck, matchedCertsForCurrentCertType[keys[len(keys)-1]])
 			return matchedCertsForCurrentCertType[keys[len(keys)-1]]
 		}
