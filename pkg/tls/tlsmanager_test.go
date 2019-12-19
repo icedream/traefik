@@ -343,7 +343,7 @@ func TestChaCha20(t *testing.T) {
 				tls.TLS_AES_128_GCM_SHA256,
 				tls.TLS_AES_256_GCM_SHA384,
 			},
-			shouldNotChangeTLSConfig: true,
+			expectPreferredCipherSuite: tls.TLS_AES_256_GCM_SHA384,
 		},
 		{
 			desc:           "Should not change order of cipher suites for ChaCha-supporting clients",
@@ -353,7 +353,17 @@ func TestChaCha20(t *testing.T) {
 				tls.TLS_AES_256_GCM_SHA384,
 				tls.TLS_CHACHA20_POLY1305_SHA256,
 			},
-			shouldNotChangeTLSConfig: true,
+			expectPreferredCipherSuite: tls.TLS_AES_256_GCM_SHA384,
+		},
+		{
+			desc:           "Should not remove server-side preference for ChaCha",
+			tlsOptionsName: "tls13_polyprefer",
+			cipherSuites: []uint16{
+				tls.TLS_AES_128_GCM_SHA256,
+				tls.TLS_AES_256_GCM_SHA384,
+				tls.TLS_CHACHA20_POLY1305_SHA256,
+			},
+			expectPreferredCipherSuite: tls.TLS_CHACHA20_POLY1305_SHA256,
 		},
 	}
 
@@ -372,10 +382,6 @@ func TestChaCha20(t *testing.T) {
 				CipherSuites: test.cipherSuites,
 			})
 			assert.NoError(t, err)
-			if test.shouldNotChangeTLSConfig {
-				assert.Nil(t, resultingConfig)
-				return
-			}
 			assert.NotNil(t, resultingConfig)
 			assert.NotEmpty(t, resultingConfig.CipherSuites)
 			assert.Equal(t, resultingConfig.CipherSuites[0], test.expectPreferredCipherSuite)
