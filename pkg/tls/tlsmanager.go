@@ -2,9 +2,6 @@ package tls
 
 import (
 	"context"
-	"crypto/ecdsa"
-	"crypto/ed25519"
-	"crypto/rsa"
 	"crypto/tls"
 	"crypto/x509"
 	"errors"
@@ -134,16 +131,19 @@ func (m *Manager) Get(storeName string, configName string) (*tls.Config, error) 
 		preferredType := getCertTypeForClientHello(clientHello)
 		var matchingCert *tls.Certificate
 		for _, cert := range store.DefaultCertificates {
-			switch cert.PrivateKey.(type) {
-			case *ecdsa.PrivateKey, *ed25519.PrivateKey:
-				if preferredType == certificate.EC {
-					return matchingCert, nil
-				}
-			case *rsa.PrivateKey:
+			certType, err := certificate.GetCertificateType(cert)
+			if err != nil {
+				log.WithoutContext().Debug("Ignoring certificate of which the type can not be detected")
+				continue
+			}
+			switch {
+			case certType == certificate.EC && preferredType == certificate.EC:
+				matchingCert = cert
+				return matchingCert, nil
+			case certType == certificate.RSA:
+				matchingCert = cert
 				if preferredType == certificate.RSA {
 					return matchingCert, nil
-				} else if matchingCert == nil {
-					matchingCert = cert
 				}
 			}
 		}
@@ -173,6 +173,8 @@ func buildCertificateStore(ctx context.Context, tlsStore Store) (*CertificateSto
 	certificateStore := NewCertificateStore()
 	certificateStore.DynamicCerts.Set(make(map[certificateKey]*tls.Certificate))
 
+	hasRSACertificate := false
+
 	if len(tlsStore.DefaultCertificates) > 0 {
 		cert, err := buildDefaultCertificates(tlsStore.DefaultCertificates)
 		if err != nil {
@@ -199,7 +201,35 @@ func buildCertificateStore(ctx context.Context, tlsStore Store) (*CertificateSto
 			rsaCert,
 			ecCert,
 		}
+		hasRSACertificate = true
 	}
+
+	// if one hasn't been generated, check if an existing RSA certificate was added
+	if hasRSACertificate {
+		for _, cert := range certificateStore.DefaultCertificates {
+			certType, err := certificate.GetCertificateType(cert)
+			if err != nil {
+				log.FromContext(ctx).Debug("Ignoring certificate of unknown type")
+				continue
+			}
+			if certType == certificate.RSA {
+				hasRSACertificate = true
+				break
+			}
+		}
+	}
+
+	// if no RSA certificate was added or generated, generate one to avoid errors
+	// with clients only supporting RSA.
+	if !hasRSACertificate {
+		log.FromContext(ctx).Debug("No default RSA certificate configured, generating")
+		cert, err := generate.DefaultCertificate(certificate.RSA)
+		if err != nil {
+			return certificateStore, err
+		}
+		certificateStore.DefaultCertificates = append(certificateStore.DefaultCertificates, cert)
+	}
+
 	return certificateStore, nil
 }
 
