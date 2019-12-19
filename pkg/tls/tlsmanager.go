@@ -140,7 +140,7 @@ func (m *Manager) Get(storeName string, configName string) (*tls.Config, error) 
 				}
 			}
 		}
-		return nil, nil
+		return tlsConfig, nil
 	}
 
 	tlsConfig.GetCertificate = func(clientHello *tls.ClientHelloInfo) (*tls.Certificate, error) {
