@@ -279,7 +279,7 @@ func buildCertificateStore(ctx context.Context, tlsStore Store) (*CertificateSto
 	}
 
 	// if one hasn't been generated, check if an existing RSA certificate was added
-	if hasRSACertificate {
+	if !hasRSACertificate {
 		for _, cert := range certificateStore.DefaultCertificates {
 			certType, err := certificate.GetCertificateType(cert)
 			if err != nil {
