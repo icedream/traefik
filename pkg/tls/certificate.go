@@ -213,7 +213,6 @@ func (c *Certificate) AppendCertificate(certs map[string]map[certificateKey]*tls
 	case x509.ECDSA,
 		x509.Ed25519:
 		certKey.certType = certificate.EC
-	// NOTE - x509.Ed25519 not yet allowed by CA/B Baseline Reqs.
 	default:
 		return fmt.Errorf("Unsupported certificate public key algorithm %s", parsedCert.PublicKeyAlgorithm)
 	}
