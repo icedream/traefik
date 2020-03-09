@@ -190,33 +190,33 @@ TLS parameters used to be specified in the static configuration, as an entryPoin
 With Traefik v2, a new dynamic TLS section at the root contains all the desired TLS configurations.
 Then, a [router's TLS field](../routing/routers/index.md#tls) can refer to one of the [TLS configurations](../https/tls.md) defined at the root, hence defining the [TLS configuration](../https/tls.md) for that router.
 
-!!! example "TLS on web-secure entryPoint becomes TLS option on Router-1"
+!!! example "TLS on websecure entryPoint becomes TLS option on Router-1"
 
     !!! info "v1"
     
     ```toml tab="File (TOML)"
     # static configuration
     [entryPoints]
-      [entryPoints.web-secure]
+      [entryPoints.websecure]
         address = ":443"
     
-        [entryPoints.web-secure.tls]
+        [entryPoints.websecure.tls]
           minVersion = "VersionTLS12"
           cipherSuites = [
             "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
             "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384",
-            "TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305",
-            "TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305",
+            "TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256",
+            "TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256",
             "TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256",
             "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
           ]
-          [[entryPoints.web-secure.tls.certificates]]
+          [[entryPoints.websecure.tls.certificates]]
             certFile = "path/to/my.cert"
             keyFile = "path/to/my.key"
     ```
 
     ```bash tab="CLI"
-    --entryPoints='Name:web-secure Address::443 TLS:path/to/my.cert,path/to/my.key TLS.MinVersion:VersionTLS12 TLS.CipherSuites:TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256'
+    --entryPoints='Name:websecure Address::443 TLS:path/to/my.cert,path/to/my.key TLS.MinVersion:VersionTLS12 TLS.CipherSuites:TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256,TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256'
     ```
 
     !!! info "v2"
@@ -236,16 +236,13 @@ Then, a [router's TLS field](../routing/routers/index.md#tls) can refer to one o
       keyFile = "/path/to/domain.key"
     
     [tls.options]
-      [tls.options.default]
-        minVersion = "VersionTLS12"
-    
       [tls.options.myTLSOptions]
-        minVersion = "VersionTLS13"
+        minVersion = "VersionTLS12"
         cipherSuites = [
           "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
           "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384",
-          "TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305",
-          "TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305",
+          "TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256",
+          "TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256",
           "TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256",
           "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
         ]
@@ -267,11 +264,11 @@ Then, a [router's TLS field](../routing/routers/index.md#tls) can refer to one o
           keyFile: /path/to/domain.key
       options:
         myTLSOptions:
-          minVersion: VersionTLS13
+          minVersion: VersionTLS12
           cipherSuites:
 	        - TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
-	        - TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305
-	        - TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305
+	        - TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256
+	        - TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256
 	        - TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256
 	        - TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
     ```
@@ -286,11 +283,11 @@ Then, a [router's TLS field](../routing/routers/index.md#tls) can refer to one o
       namespace: default
     
     spec:
-      minVersion: VersionTLS13
+      minVersion: VersionTLS12
       cipherSuites:
 	    - TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
-	    - TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305
-	    - TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305
+	    - TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256
+	    - TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256
 	    - TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256
 	    - TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
     
@@ -390,10 +387,8 @@ To apply a redirection, one of the redirect middlewares, [RedirectRegex](../midd
         - match: HostRegexp(`{any:.+}`)
           kind: Rule
           services:
-            # any service in the namespace
-            # the service will be never called
-            - name: noop
-              port: 80
+            # the noop service will be never called
+            - name: noop@internal
           middlewares:
             - name: https_redirect
               # if the Middleware has distinct namespace
@@ -434,13 +429,8 @@ To apply a redirection, one of the redirect middlewares, [RedirectRegex](../midd
         entryPoints = ["web"]
         middlewares = ["https_redirect"]
         rule = "HostRegexp(`{any:.+}`)"
-        service = "noop"
-    
-    [http.services]
-      # noop service, the URL will be never called
-      [http.services.noop.loadBalancer]
-        [[http.services.noop.loadBalancer.servers]]
-          url = "http://192.168.0.1:1337"
+        # the noop service will be never called
+        service = "noop@internal"
     
     [http.middlewares]
       [http.middlewares.https_redirect.redirectScheme]
@@ -475,14 +465,8 @@ To apply a redirection, one of the redirect middlewares, [RedirectRegex](../midd
           middlewares:
             - https_redirect
           rule: "HostRegexp(`{any:.+}`)"
-          service: noop
-    
-      services:
-        # noop service, the URL will be never called
-        noop:
-          loadBalancer:
-            servers:
-              - url: http://192.168.0.1:1337
+          # the noop service will be never called
+          service: noop@internal
     
       middlewares:
         https_redirect:
@@ -681,7 +665,7 @@ To apply a redirection, one of the redirect middlewares, [RedirectRegex](../midd
 With the new core notions of v2 (introduced earlier in the section
 ["Frontends and Backends Are Dead... Long Live Routers, Middlewares, and Services"](#frontends-and-backends-are-dead-long-live-routers-middlewares-and-services)),
 transforming the URL path prefix of incoming requests is configured with [middlewares](../middlewares/overview.md),
-after the routing step with [router rule `PathPrefix`](https://docs.traefik.io/v2.0/routing/routers/#rule).
+after the routing step with [router rule `PathPrefix`](../routing/routers/index.md#rule).
 
 Use Case: Incoming requests to `http://company.org/admin` are forwarded to the webapplication "admin",
 with the path `/admin` stripped, e.g. to `http://<IP>:<port>/`. In this case, you must:
@@ -818,32 +802,32 @@ with the path `/admin` stripped, e.g. to `http://<IP>:<port>/`. In this case, yo
     
     ```toml tab="File (TOML)"
     # static configuration
-    defaultEntryPoints = ["web-secure","web"]
+    defaultEntryPoints = ["websecure","web"]
     
     [entryPoints.web]
     address = ":80"
       [entryPoints.web.redirect]
       entryPoint = "webs"
-    [entryPoints.web-secure]
+    [entryPoints.websecure]
       address = ":443"
-      [entryPoints.https.tls]
+      [entryPoints.websecure.tls]
     
     [acme]
       email = "your-email-here@my-awesome-app.org"
       storage = "acme.json"
-      entryPoint = "web-secure"
+      entryPoint = "websecure"
       onHostRule = true
       [acme.httpChallenge]
         entryPoint = "web"
     ```
 
     ```bash tab="CLI"
-    --defaultentrypoints=web-secure,web
-    --entryPoints=Name:web Address::80 Redirect.EntryPoint:web-secure
-    --entryPoints=Name:web-secure Address::443 TLS
+    --defaultentrypoints=websecure,web
+    --entryPoints=Name:web Address::80 Redirect.EntryPoint:websecure
+    --entryPoints=Name:websecure Address::443 TLS
     --acme.email=your-email-here@my-awesome-app.org
     --acme.storage=acme.json
-    --acme.entryPoint=web-secure
+    --acme.entryPoint=websecure
     --acme.onHostRule=true
     --acme.httpchallenge.entrypoint=http
     ```
@@ -856,13 +840,13 @@ with the path `/admin` stripped, e.g. to `http://<IP>:<port>/`. In this case, yo
       [entryPoints.web]
         address = ":80"
     
-      [entryPoints.web-secure]
+      [entryPoints.websecure]
         address = ":443"
     
-    [certificatesResolvers.sample.acme]
+    [certificatesResolvers.myresolver.acme]
       email = "your-email@your-domain.org"
       storage = "acme.json"
-      [certificatesResolvers.sample.acme.httpChallenge]
+      [certificatesResolvers.myresolver.acme.httpChallenge]
         # used during the challenge
         entryPoint = "web"
     ```
@@ -872,11 +856,11 @@ with the path `/admin` stripped, e.g. to `http://<IP>:<port>/`. In this case, yo
       web:
         address: ":80"
     
-      web-secure:
+      websecure:
         address: ":443"
     
     certificatesResolvers:
-      sample:
+      myresolver:
         acme:
           email: your-email@your-domain.org
           storage: acme.json
@@ -888,9 +872,9 @@ with the path `/admin` stripped, e.g. to `http://<IP>:<port>/`. In this case, yo
     ```bash tab="CLI"
     --entryPoints.web.address=:80
     --entryPoints.websecure.address=:443
-    --certificatesResolvers.sample.acme.email=your-email@your-domain.org
-    --certificatesResolvers.sample.acme.storage=acme.json
-    --certificatesResolvers.sample.acme.httpChallenge.entryPoint=web
+    --certificatesResolvers.myresolver.acme.email=your-email@your-domain.org
+    --certificatesResolvers.myresolver.acme.storage=acme.json
+    --certificatesResolvers.myresolver.acme.httpChallenge.entryPoint=web
     ```
 
 ## Traefik Logs
@@ -1069,7 +1053,7 @@ Each root item has been moved to a related section or removed.
     providersThrottleDuration = "2s"
     AllowMinWeightZero = true
     debug = true
-    defaultEntryPoints = ["web", "web-secure"]
+    defaultEntryPoints = ["web", "websecure"]
     keepTrailingSlash = false
     ```
 
@@ -1083,7 +1067,7 @@ Each root item has been moved to a related section or removed.
     --providersthrottleduration=2s
     --allowminweightzero=true
     --debug=true
-    --defaultentrypoints=web,web-secure
+    --defaultentrypoints=web,websecure
     --keeptrailingslash=true
     ```
 
@@ -1156,21 +1140,21 @@ As the dashboard access is now secured by default you can either:
     ## static configuration
     # traefik.toml
     
-    [entryPoints.web-secure]
+    [entryPoints.websecure]
       address = ":443"
-      [entryPoints.web-secure.tls]
-      [entryPoints.web-secure.auth]
-        [entryPoints.web-secure.auth.basic]
+      [entryPoints.websecure.tls]
+      [entryPoints.websecure.auth]
+        [entryPoints.websecure.auth.basic]
           users = [
             "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/"
           ]
     
     [api]
-      entryPoint = "web-secure"
+      entryPoint = "websecure"
     ```
 
     ```bash tab="CLI"
-    --entryPoints='Name:web-secure Address::443 TLS Auth.Basic.Users:test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/'
+    --entryPoints='Name:websecure Address::443 TLS Auth.Basic.Users:test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/'
     --api
     ```
 
@@ -1180,7 +1164,7 @@ As the dashboard access is now secured by default you can either:
     # dynamic configuration
     labels:
       - "traefik.http.routers.api.rule=Host(`traefik.docker.localhost`)"
-      - "traefik.http.routers.api.entrypoints=web-secured"
+      - "traefik.http.routers.api.entrypoints=websecured"
       - "traefik.http.routers.api.service=api@internal"
       - "traefik.http.routers.api.middlewares=myAuth"
       - "traefik.http.routers.api.tls"
@@ -1191,7 +1175,7 @@ As the dashboard access is now secured by default you can either:
     ## static configuration
     # traefik.toml
     
-    [entryPoints.web-secure]
+    [entryPoints.websecure]
       address = ":443"
     
     [api]
@@ -1206,7 +1190,7 @@ As the dashboard access is now secured by default you can either:
     
     [http.routers.api]
       rule = "Host(`traefik.docker.localhost`)"
-      entrypoints = ["web-secure"]
+      entrypoints = ["websecure"]
       service = "api@internal"
       middlewares = ["myAuth"]
       [http.routers.api.tls]
@@ -1222,7 +1206,7 @@ As the dashboard access is now secured by default you can either:
     # traefik.yaml
     
     entryPoints:
-      web-secure:
+      websecure:
         address: ':443'
         
     api: {}
@@ -1241,7 +1225,7 @@ As the dashboard access is now secured by default you can either:
         api:
           rule: Host(`traefik.docker.localhost`)
           entrypoints:
-            - web-secure
+            - websecure
           service: api@internal
           middlewares:
             - myAuth

@@ -198,14 +198,22 @@ func clientHelloServerName(br *bufio.Reader) (string, bool, string, error) {
 	if err != nil {
 		opErr, ok := err.(*net.OpError)
 		if err != io.EOF && (!ok || !opErr.Timeout()) {
-			log.WithoutContext().Errorf("Error while Peeking first byte: %s", err)
+			log.WithoutContext().Debugf("Error while Peeking first byte: %s", err)
 		}
 		return "", false, "", err
 	}
 
+	// No valid TLS record has a type of 0x80, however SSLv2 handshakes
+	// start with a uint16 length where the MSB is set and the first record
+	// is always < 256 bytes long. Therefore typ == 0x80 strongly suggests
+	// an SSLv2 client.
+	const recordTypeSSLv2 = 0x80
 	const recordTypeHandshake = 0x16
 	if hdr[0] != recordTypeHandshake {
-		// log.Errorf("Error not tls")
+		if hdr[0] == recordTypeSSLv2 {
+			// we consider SSLv2 as TLS and it will be refuse by real TLS handshake.
+			return "", true, getPeeked(br), nil
+		}
 		return "", false, getPeeked(br), nil // Not TLS.
 	}
 

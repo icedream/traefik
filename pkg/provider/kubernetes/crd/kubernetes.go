@@ -12,7 +12,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cenkalti/backoff/v3"
+	"github.com/cenkalti/backoff/v4"
 	"github.com/containous/traefik/v2/pkg/config/dynamic"
 	"github.com/containous/traefik/v2/pkg/job"
 	"github.com/containous/traefik/v2/pkg/log"
@@ -98,11 +98,9 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 		return err
 	}
 
-	pool.Go(func(stop chan bool) {
+	pool.GoCtx(func(ctxPool context.Context) {
 		operation := func() error {
-			stopWatch := make(chan struct{}, 1)
-			defer close(stopWatch)
-			eventsChan, err := k8sClient.WatchAll(p.Namespaces, stopWatch)
+			eventsChan, err := k8sClient.WatchAll(p.Namespaces, ctxPool.Done())
 
 			if err != nil {
 				logger.Errorf("Error watching kubernetes events: %v", err)
@@ -110,20 +108,20 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 				select {
 				case <-timer.C:
 					return err
-				case <-stop:
+				case <-ctxPool.Done():
 					return nil
 				}
 			}
 
 			throttleDuration := time.Duration(p.ThrottleDuration)
-			throttledChan := throttleEvents(ctxLog, throttleDuration, stop, eventsChan)
+			throttledChan := throttleEvents(ctxLog, throttleDuration, pool, eventsChan)
 			if throttledChan != nil {
 				eventsChan = throttledChan
 			}
 
 			for {
 				select {
-				case <-stop:
+				case <-ctxPool.Done():
 					return nil
 				case event := <-eventsChan:
 					// Note that event is the *first* event that came in during this throttling interval -- if we're hitting our throttle, we may have dropped events.
@@ -156,7 +154,7 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 		notify := func(err error, time time.Duration) {
 			logger.Errorf("Provider connection error: %v; retrying in %s", err, time)
 		}
-		err := backoff.RetryNotify(safe.OperationWithRecover(operation), job.NewBackOff(backoff.NewExponentialBackOff()), notify)
+		err := backoff.RetryNotify(safe.OperationWithRecover(operation), backoff.WithContext(job.NewBackOff(backoff.NewExponentialBackOff()), ctxPool), notify)
 		if err != nil {
 			logger.Errorf("Cannot connect to Provider: %v", err)
 		}
@@ -170,9 +168,11 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 	conf := &dynamic.Configuration{
 		HTTP: p.loadIngressRouteConfiguration(ctx, client, tlsConfigs),
 		TCP:  p.loadIngressRouteTCPConfiguration(ctx, client, tlsConfigs),
+		UDP:  p.loadIngressRouteUDPConfiguration(ctx, client),
 		TLS: &dynamic.TLSConfiguration{
 			Certificates: getTLSConfig(tlsConfigs),
 			Options:      buildTLSOptions(ctx, client),
+			Stores:       buildTLSStores(ctx, client),
 		},
 	}
 
@@ -468,6 +468,7 @@ func buildTLSOptions(ctx context.Context, client Client) map[string]tls.Options 
 		return tlsOptions
 	}
 	tlsOptions = make(map[string]tls.Options)
+	var nsDefault []string
 
 	for _, tlsOption := range tlsOptionsCRD {
 		logger := log.FromContext(log.With(ctx, log.Str("tlsOption", tlsOption.Name), log.Str("namespace", tlsOption.Namespace)))
@@ -494,7 +495,13 @@ func buildTLSOptions(ctx context.Context, client Client) map[string]tls.Options 
 			clientCAs = append(clientCAs, tls.FileOrContent(cert))
 		}
 
-		tlsOptions[makeID(tlsOption.Namespace, tlsOption.Name)] = tls.Options{
+		id := makeID(tlsOption.Namespace, tlsOption.Name)
+		// If the name is default, we override the default config.
+		if tlsOption.Name == "default" {
+			id = tlsOption.Name
+			nsDefault = append(nsDefault, tlsOption.Namespace)
+		}
+		tlsOptions[id] = tls.Options{
 			MinVersion:       tlsOption.Spec.MinVersion,
 			MaxVersion:       tlsOption.Spec.MaxVersion,
 			CipherSuites:     tlsOption.Spec.CipherSuites,
@@ -503,10 +510,70 @@ func buildTLSOptions(ctx context.Context, client Client) map[string]tls.Options 
 				CAFiles:        clientCAs,
 				ClientAuthType: tlsOption.Spec.ClientAuth.ClientAuthType,
 			},
-			SniStrict: tlsOption.Spec.SniStrict,
+			SniStrict:                tlsOption.Spec.SniStrict,
+			PreferServerCipherSuites: tlsOption.Spec.PreferServerCipherSuites,
 		}
 	}
+
+	if len(nsDefault) > 1 {
+		delete(tlsOptions, "default")
+		log.FromContext(ctx).Errorf("Default TLS Options defined in multiple namespaces: %v", nsDefault)
+	}
+
 	return tlsOptions
+}
+
+func buildTLSStores(ctx context.Context, client Client) map[string]tls.Store {
+	tlsStoreCRD := client.GetTLSStores()
+	var tlsStores map[string]tls.Store
+
+	if len(tlsStoreCRD) == 0 {
+		return tlsStores
+	}
+	tlsStores = make(map[string]tls.Store)
+	var nsDefault []string
+
+	for _, tlsStore := range tlsStoreCRD {
+		namespace := tlsStore.Namespace
+		secretName := tlsStore.Spec.DefaultCertificate.SecretName
+		logger := log.FromContext(log.With(ctx, log.Str("tlsStore", tlsStore.Name), log.Str("namespace", namespace), log.Str("secretName", secretName)))
+
+		secret, exists, err := client.GetSecret(namespace, secretName)
+		if err != nil {
+			logger.Errorf("Failed to fetch secret %s/%s: %v", namespace, secretName, err)
+			continue
+		}
+		if !exists {
+			logger.Errorf("Secret %s/%s does not exist", namespace, secretName)
+			continue
+		}
+
+		cert, key, err := getCertificateBlocks(secret, namespace, secretName)
+		if err != nil {
+			logger.Errorf("Could not get certificate blocks: %v", err)
+			continue
+		}
+
+		id := makeID(tlsStore.Namespace, tlsStore.Name)
+		// If the name is default, we override the default config.
+		if tlsStore.Name == "default" {
+			id = tlsStore.Name
+			nsDefault = append(nsDefault, tlsStore.Namespace)
+		}
+		tlsStores[id] = tls.Store{
+			DefaultCertificate: &tls.Certificate{
+				CertFile: tls.FileOrContent(cert),
+				KeyFile:  tls.FileOrContent(key),
+			},
+		}
+	}
+
+	if len(nsDefault) > 1 {
+		delete(tlsStores, "default")
+		log.FromContext(ctx).Errorf("Default TLS Stores defined in multiple namespaces: %v", nsDefault)
+	}
+
+	return tlsStores
 }
 
 func checkStringQuoteValidity(value string) error {
@@ -625,7 +692,7 @@ func getCABlocks(secret *corev1.Secret, namespace, secretName string) (string, e
 	return cert, nil
 }
 
-func throttleEvents(ctx context.Context, throttleDuration time.Duration, stop chan bool, eventsChan <-chan interface{}) chan interface{} {
+func throttleEvents(ctx context.Context, throttleDuration time.Duration, pool *safe.Pool, eventsChan <-chan interface{}) chan interface{} {
 	if throttleDuration == 0 {
 		return nil
 	}
@@ -635,10 +702,10 @@ func throttleEvents(ctx context.Context, throttleDuration time.Duration, stop ch
 	// Run a goroutine that reads events from eventChan and does a non-blocking write to pendingEvent.
 	// This guarantees that writing to eventChan will never block,
 	// and that pendingEvent will have something in it if there's been an event since we read from that channel.
-	go func() {
+	pool.GoCtx(func(ctxPool context.Context) {
 		for {
 			select {
-			case <-stop:
+			case <-ctxPool.Done():
 				return
 			case nextEvent := <-eventsChan:
 				select {
@@ -650,7 +717,7 @@ func throttleEvents(ctx context.Context, throttleDuration time.Duration, stop ch
 				}
 			}
 		}
-	}()
+	})
 
 	return eventsChanBuffered
 }

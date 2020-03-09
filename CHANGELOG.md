@@ -1,3 +1,122 @@
+## [v2.2.0-rc1](https://github.com/containous/traefik/tree/v2.2.0-rc1) (2020-03-05)
+[All Commits](https://github.com/containous/traefik/compare/v2.1.0-rc1...v2.2.0-rc1)
+
+**Enhancements:**
+- **[acme,middleware,tls]** Entry point redirection and default routers configuration ([#6417](https://github.com/containous/traefik/pull/6417) by [ldez](https://github.com/ldez))
+- **[consul,etcd,kv,redis,zk]** Add KV store providers (dynamic configuration only) ([#5899](https://github.com/containous/traefik/pull/5899) by [ldez](https://github.com/ldez))
+- **[consulcatalog,docker,marathon,rancher,udp]** Add UDP in providers with labels ([#6327](https://github.com/containous/traefik/pull/6327) by [juliens](https://github.com/juliens))
+- **[docker]** Fix traefik behavior when network_mode is host ([#5698](https://github.com/containous/traefik/pull/5698) by [FuNK3Y](https://github.com/FuNK3Y))
+- **[docker]** Support SSH connection to Docker ([#5969](https://github.com/containous/traefik/pull/5969) by [sh7dm](https://github.com/sh7dm))
+- **[healthcheck]** Do not follow redirects for the health check URLs ([#5147](https://github.com/containous/traefik/pull/5147) by [coder-hugo](https://github.com/coder-hugo))
+- **[k8s,k8s/crd,udp]** Add UDP support in kubernetesCRD provider ([#6348](https://github.com/containous/traefik/pull/6348) by [jbdoumenjou](https://github.com/jbdoumenjou))
+- **[k8s,k8s/crd]** Add TLSStores to Kubernetes CRD ([#6270](https://github.com/containous/traefik/pull/6270) by [dtomcej](https://github.com/dtomcej))
+- **[k8s,k8s/crd]** Add namespace attribute on IngressRouteTCP service ([#6085](https://github.com/containous/traefik/pull/6085) by [jbdoumenjou](https://github.com/jbdoumenjou))
+- **[k8s,k8s/ingress]** Support &#39;networking.k8s.io/v1beta1&#39; ingress apiVersion ([#6171](https://github.com/containous/traefik/pull/6171) by [ldez](https://github.com/ldez))
+- **[k8s,k8s/ingress]** Update deprecated function call in k8s providers  ([#5241](https://github.com/containous/traefik/pull/5241) by [Wagum](https://github.com/Wagum))
+- **[k8s,k8s/ingress]** Add Ingress annotations support ([#6160](https://github.com/containous/traefik/pull/6160) by [ldez](https://github.com/ldez))
+- **[k8s,k8s/ingress]** systematically call updateIngressStatus ([#6148](https://github.com/containous/traefik/pull/6148) by [mpl](https://github.com/mpl))
+- **[logs,middleware]** Rename the non-exposed field &#34;count&#34; to &#34;size&#34; ([#6048](https://github.com/containous/traefik/pull/6048) by [sylr](https://github.com/sylr))
+- **[logs,middleware]** Add http request scheme to logger ([#6226](https://github.com/containous/traefik/pull/6226) by [valtlfelipe](https://github.com/valtlfelipe))
+- **[logs]** Decrease log level for client related error ([#6204](https://github.com/containous/traefik/pull/6204) by [sylr](https://github.com/sylr))
+- **[metrics]** Add metrics about TLS ([#6255](https://github.com/containous/traefik/pull/6255) by [sylr](https://github.com/sylr))
+- **[middleware]** Add period for rate limiter middleware ([#6055](https://github.com/containous/traefik/pull/6055) by [mpl](https://github.com/mpl))
+- **[middleware]** Let metrics libs handle the atomicity ([#5738](https://github.com/containous/traefik/pull/5738) by [sylr](https://github.com/sylr))
+- **[middleware]** Rework access control origin configuration ([#5996](https://github.com/containous/traefik/pull/5996) by [dtomcej](https://github.com/dtomcej))
+- **[middleware]** Add serial number certificate to forward headers ([#5915](https://github.com/containous/traefik/pull/5915) by [dkijkuit](https://github.com/dkijkuit))
+- **[rancher]** Duration order consistency when multiplying number by time unit ([#5885](https://github.com/containous/traefik/pull/5885) by [maxifom](https://github.com/maxifom))
+- **[server,udp]** UDP support ([#6172](https://github.com/containous/traefik/pull/6172) by [mpl](https://github.com/mpl))
+- **[service]** Use EDF schedule algorithm for WeightedRoundRobin ([#6206](https://github.com/containous/traefik/pull/6206) by [pkumza](https://github.com/pkumza))
+- **[service]** Support mirroring request body ([#6080](https://github.com/containous/traefik/pull/6080) by [dmitriyminer](https://github.com/dmitriyminer))
+- **[tls]** Allow PreferServerCipherSuites as a TLS Option ([#6248](https://github.com/containous/traefik/pull/6248) by [dtomcej](https://github.com/dtomcej))
+- **[tracing]** Update APM client. ([#6152](https://github.com/containous/traefik/pull/6152) by [ldez](https://github.com/ldez))
+- **[tracing]** Elastic APM tracer implementation ([#5870](https://github.com/containous/traefik/pull/5870) by [amine7536](https://github.com/amine7536))
+- **[udp,webui]** WebUI: add udp pages ([#6313](https://github.com/containous/traefik/pull/6313) by [matthieuh](https://github.com/matthieuh))
+- **[webui]** Web UI: Polling on tables ([#5909](https://github.com/containous/traefik/pull/5909) by [matthieuh](https://github.com/matthieuh))
+- **[webui]** Proxy API to Traefik in dev mode ([#5980](https://github.com/containous/traefik/pull/5980) by [sh7dm](https://github.com/sh7dm))
+- **[webui]** Web UI: Table infinite scroll ([#5875](https://github.com/containous/traefik/pull/5875) by [matthieuh](https://github.com/matthieuh))
+- **[webui]** Web UI: Take off logic from generic table component ([#5910](https://github.com/containous/traefik/pull/5910) by [matthieuh](https://github.com/matthieuh))
+- **[webui]** Add dark theme for Web UI ([#6036](https://github.com/containous/traefik/pull/6036) by [sh7dm](https://github.com/sh7dm))
+- Update dependencies ([#6359](https://github.com/containous/traefik/pull/6359) by [ldez](https://github.com/ldez))
+
+**Bug fixes:**
+- **[etcd,kv]** fix: etcd provider name. ([#6212](https://github.com/containous/traefik/pull/6212) by [ldez](https://github.com/ldez))
+- **[file]** Revert &#34;Allow fsnotify to reload config files on k8s (or symlinks)&#34; ([#6416](https://github.com/containous/traefik/pull/6416) by [juliens](https://github.com/juliens))
+- **[k8s,k8s/ingress]** Improvement of the unique name of the router for Ingress. ([#6325](https://github.com/containous/traefik/pull/6325) by [ldez](https://github.com/ldez))
+- **[kv,redis]** Update valkeyrie to fix the support of Redis. ([#6291](https://github.com/containous/traefik/pull/6291) by [ldez](https://github.com/ldez))
+- **[kv]** fix: KV flaky tests. ([#6300](https://github.com/containous/traefik/pull/6300) by [ldez](https://github.com/ldez))
+- **[server]** fix: use MaxInt32. ([#5845](https://github.com/containous/traefik/pull/5845) by [ldez](https://github.com/ldez))
+- **[tracing]** Disable default APM tracer. ([#6410](https://github.com/containous/traefik/pull/6410) by [ldez](https://github.com/ldez))
+- **[udp]** Add missing generated element for UDP. ([#6309](https://github.com/containous/traefik/pull/6309) by [ldez](https://github.com/ldez))
+- **[udp]** Build all UDP services on an entrypoint ([#6329](https://github.com/containous/traefik/pull/6329) by [juliens](https://github.com/juliens))
+
+**Documentation:**
+- **[k8s,k8s/crd]** Update the k8s CRD documentation ([#6426](https://github.com/containous/traefik/pull/6426) by [jbdoumenjou](https://github.com/jbdoumenjou))
+- **[provider]** Update supported providers list. ([#6190](https://github.com/containous/traefik/pull/6190) by [ldez](https://github.com/ldez))
+
+**Misc:**
+- Merge current v2.1 branch into master ([#6429](https://github.com/containous/traefik/pull/6429) by [ldez](https://github.com/ldez))
+- Merge current v2.1 branch into master ([#6409](https://github.com/containous/traefik/pull/6409) by [ldez](https://github.com/ldez))
+- Merge current v2.1 branch into master ([#6302](https://github.com/containous/traefik/pull/6302) by [ldez](https://github.com/ldez))
+- Merge current v2.1 branch into master ([#6216](https://github.com/containous/traefik/pull/6216) by [ldez](https://github.com/ldez))
+- Merge current v2.1 branch into master ([#6138](https://github.com/containous/traefik/pull/6138) by [ldez](https://github.com/ldez))
+- Merge current v2.1 branch into master ([#6004](https://github.com/containous/traefik/pull/6004) by [ldez](https://github.com/ldez))
+- Merge current v2.1 branch into master ([#5933](https://github.com/containous/traefik/pull/5933) by [ldez](https://github.com/ldez))
+
+## [v2.1.6](https://github.com/containous/traefik/tree/v2.1.6) (2020-02-28)
+[All Commits](https://github.com/containous/traefik/compare/v2.1.4...v2.1.6)
+
+**Bug fixes:**
+- **[acme]** Update go-acme/lego to v3.4.0 ([#6376](https://github.com/containous/traefik/pull/6376) by [ldez](https://github.com/ldez))
+- **[api]** Return an error when ping is not enabled. ([#6304](https://github.com/containous/traefik/pull/6304) by [ldez](https://github.com/ldez))
+- **[consulcatalog]** Early filter of the catalog services. ([#6307](https://github.com/containous/traefik/pull/6307) by [ldez](https://github.com/ldez))
+- **[consulcatalog]** fix: consul-catalog uses port from label instead of item port. ([#6345](https://github.com/containous/traefik/pull/6345) by [ldez](https://github.com/ldez))
+- **[file]** fix: YML example of template for the file provider. ([#6402](https://github.com/containous/traefik/pull/6402) by [ldez](https://github.com/ldez))
+- **[file]** Allow fsnotify to reload config files on k8s (or symlinks) ([#5037](https://github.com/containous/traefik/pull/5037) by [dtomcej](https://github.com/dtomcej))
+- **[healthcheck]** Launch healthcheck only one time instead of two ([#6372](https://github.com/containous/traefik/pull/6372) by [juliens](https://github.com/juliens))
+- **[k8s,k8s/crd,k8s/ingress]** Fix secret informer load ([#6364](https://github.com/containous/traefik/pull/6364) by [mmatur](https://github.com/mmatur))
+- **[k8s,k8s/crd]** Use consistent protocol determination ([#6365](https://github.com/containous/traefik/pull/6365) by [dtomcej](https://github.com/dtomcej))
+- **[k8s,k8s/crd]** fix: use the right error in the log ([#6311](https://github.com/containous/traefik/pull/6311) by [jbdoumenjou](https://github.com/jbdoumenjou))
+- **[provider]** Don&#39;t throw away valid configuration updates ([#5952](https://github.com/containous/traefik/pull/5952) by [zaphod42](https://github.com/zaphod42))
+- **[tls]** Consider SSLv2 as TLS in order to close the handshake correctly ([#6371](https://github.com/containous/traefik/pull/6371) by [juliens](https://github.com/juliens))
+- **[tracing]** Fix docs and code to match in haystack tracing. ([#6352](https://github.com/containous/traefik/pull/6352) by [evanlurvey](https://github.com/evanlurvey))
+
+**Documentation:**
+- **[acme]** Improve documentation. ([#6324](https://github.com/containous/traefik/pull/6324) by [ldez](https://github.com/ldez))
+- **[file]** Add information about filename and directory options. ([#6333](https://github.com/containous/traefik/pull/6333) by [ldez](https://github.com/ldez))
+- **[k8s,k8s/ingress]** Docs: Clarifying format of ingress endpoint service name ([#6306](https://github.com/containous/traefik/pull/6306) by [BretFisher](https://github.com/BretFisher))
+- **[k8s/crd]** fix: dashboard example with k8s CRD. ([#6330](https://github.com/containous/traefik/pull/6330) by [ldez](https://github.com/ldez))
+- **[middleware,k8s]** Fix formatting in &#34;Kubernetes Namespace&#34; block ([#6305](https://github.com/containous/traefik/pull/6305) by [berekuk](https://github.com/berekuk))
+- **[tls]** Remove TLS cipher suites for TLS minVersion 1.3 ([#6328](https://github.com/containous/traefik/pull/6328) by [rYR79435](https://github.com/rYR79435))
+- **[tls]** Fix typo in the godoc of TLS option MaxVersion ([#6347](https://github.com/containous/traefik/pull/6347) by [pschaub](https://github.com/pschaub))
+- Use explicitly the word Kubernetes in the migration guide. ([#6380](https://github.com/containous/traefik/pull/6380) by [ldez](https://github.com/ldez))
+- Minor readme improvements ([#6293](https://github.com/containous/traefik/pull/6293) by [Rowayda-Khayri](https://github.com/Rowayda-Khayri))
+- Added link to community forum ([#6283](https://github.com/containous/traefik/pull/6283) by [isaacnewtonfx](https://github.com/isaacnewtonfx))
+
+## [v2.1.5](https://github.com/containous/traefik/tree/v2.1.5) (2020-02-28)
+
+Skipped.
+
+## [v2.1.4](https://github.com/containous/traefik/tree/v2.1.4) (2020-02-06)
+[All Commits](https://github.com/containous/traefik/compare/v2.1.3...v2.1.4)
+
+**Bug fixes:**
+- **[acme,logs]** Improvement of the certificates resolvers logs ([#6225](https://github.com/containous/traefik/pull/6225) by [ldez](https://github.com/ldez))
+- **[acme]** Fix kubernetes providers shutdown and clean safe.Pool ([#6244](https://github.com/containous/traefik/pull/6244) by [juliens](https://github.com/juliens))
+- **[authentication,middleware]** don&#39;t create http client for each request in forwardAuth middleware ([#6267](https://github.com/containous/traefik/pull/6267) by [juliens](https://github.com/juliens))
+- **[k8s,k8s/ingress]** Allow wildcard hosts in ingress provider ([#6251](https://github.com/containous/traefik/pull/6251) by [dtomcej](https://github.com/dtomcej))
+- **[logs,tls]** Properly purge default certificate from stores before logging ([#6281](https://github.com/containous/traefik/pull/6281) by [dtomcej](https://github.com/dtomcej))
+- **[middleware]** use provider-qualified name when recursing for chain ([#6233](https://github.com/containous/traefik/pull/6233) by [mpl](https://github.com/mpl))
+
+**Documentation:**
+- **[acme,cli]** Documentation fix for acme.md CLI ([#6262](https://github.com/containous/traefik/pull/6262) by [altano](https://github.com/altano))
+- **[acme,k8s/crd]** Add missing certResolver in IngressRoute examples. ([#6265](https://github.com/containous/traefik/pull/6265) by [ldez](https://github.com/ldez))
+- **[k8s]** fix a typo ([#6279](https://github.com/containous/traefik/pull/6279) by [silenceshell](https://github.com/silenceshell))
+- **[middleware]** Minor documentation tweaks. ([#6218](https://github.com/containous/traefik/pull/6218) by [stevegroom](https://github.com/stevegroom))
+- Correct a trivial spelling mistake in the documentation. ([#6269](https://github.com/containous/traefik/pull/6269) by [nepella](https://github.com/nepella))
+- Update install-traefik.md ([#6260](https://github.com/containous/traefik/pull/6260) by [bitfactory-sander-lissenburg](https://github.com/bitfactory-sander-lissenburg))
+- doc: use the same entry point name everywhere ([#6219](https://github.com/containous/traefik/pull/6219) by [ldez](https://github.com/ldez))
+- readme: update links to use HTTPS ([#6274](https://github.com/containous/traefik/pull/6274) by [imba-tjd](https://github.com/imba-tjd))
+
 ## [v2.1.3](https://github.com/containous/traefik/tree/v2.1.3) (2020-01-21)
 [All Commits](https://github.com/containous/traefik/compare/v2.1.2...v2.1.3)
 

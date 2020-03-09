@@ -65,6 +65,8 @@ spec:
     kind: TraefikService
     mirrors:
       - name: s2
+        # Optional
+        maxBodySize: 2000000000
         # Optional, as it is the default value
         kind: Service
         percent: 20
@@ -78,7 +80,7 @@ metadata:
 spec:
   entryPoints:
     - web
-    - web-secure
+    - websecure
   routes:
     - match: Host(`foo.com`) && PathPrefix(`/bar`)
       kind: Rule
@@ -155,3 +157,42 @@ spec:
     options:
       name: myTLSOption
       namespace: default
+
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRouteUDP
+metadata:
+  name: ingressrouteudp.crd
+  namespace: default
+
+spec:
+  entryPoints:
+    - footcp
+  routes:
+    - services:
+        - name: whoamiudp
+          port: 8080
+
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: TLSOption
+metadata:
+  name: tlsoption
+  namespace: default
+
+spec:
+  minVersion: foobar
+  maxVersion: foobar
+  cipherSuites:
+    - foobar
+    - foobar
+  curvePreferences:
+    - foobar
+    - foobar
+  clientAuth:
+    caFiles:
+      - foobar
+      - foobar
+    clientAuthType: foobar
+  sniStrict: true
+  preferServerCipherSuites: true

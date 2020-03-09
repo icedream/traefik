@@ -4,7 +4,7 @@
 labels:
   - traefik.http.routers.blog.rule=Host(`company.com`) && Path(`/blog`)
   - traefik.http.routers.blog.tls=true
-  - traefik.http.routers.blog.tls.certresolver=le
+  - traefik.http.routers.blog.tls.certresolver=myresolver
 ```
 
 ```yaml tab="Docker (Swarm)"
@@ -13,12 +13,11 @@ deploy:
   labels:
     - traefik.http.routers.blog.rule=Host(`company.com`) && Path(`/blog`)
     - traefik.http.routers.blog.tls=true
-    - traefik.http.routers.blog.tls.certresolver=le
+    - traefik.http.routers.blog.tls.certresolver=myresolver
     - traefik.http.services.blog-svc.loadbalancer.server.port=8080"
 ```
 
 ```yaml tab="Kubernetes"
----
 apiVersion: traefik.containo.us/v1alpha1
 kind: IngressRoute
 metadata:
@@ -32,14 +31,15 @@ spec:
     services:
     - name: blog
       port: 8080
-  tls: {}
+  tls:
+    certresolver: myresolver
 ```
 
 ```json tab="Marathon"
 labels: {
   "traefik.http.routers.blog.rule": "Host(`company.com`) && Path(`/blog`)",
   "traefik.http.routers.blog.tls": "true",
-  "traefik.http.routers.blog.tls.certresolver": "le",
+  "traefik.http.routers.blog.tls.certresolver": "myresolver",
   "traefik.http.services.blog-svc.loadbalancer.server.port": "8080"
 }
 ```
@@ -49,16 +49,16 @@ labels: {
 labels:
   - traefik.http.routers.blog.rule=Host(`company.com`) && Path(`/blog`)
   - traefik.http.routers.blog.tls=true
-  - traefik.http.routers.blog.tls.certresolver=le
+  - traefik.http.routers.blog.tls.certresolver=myresolver
 ```
 
 ```toml tab="Single Domain"
 ## Dynamic configuration
 [http.routers]
-    [http.routers.blog]
-    rule = "Host(`company.com`) && Path(`/blog`)"
-    [http.routers.blog.tls]
-        certResolver = "le" # From static configuration
+  [http.routers.blog]
+  rule = "Host(`company.com`) && Path(`/blog`)"
+  [http.routers.blog.tls]
+    certResolver = "myresolver"
 ```
 
 ```yaml tab="File (YAML)"
@@ -68,5 +68,5 @@ http:
     blog:
       rule: "Host(`company.com`) && Path(`/blog`)"
       tls:
-        certResolver: le
+        certResolver: myresolver
 ```

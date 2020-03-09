@@ -2,6 +2,7 @@ package integration
 
 import (
 	"bytes"
+	"crypto/rand"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -549,6 +550,83 @@ func (s *SimpleSuite) TestServiceConfigErrors(c *check.C) {
 	c.Assert(err, checker.IsNil)
 }
 
+func (s *SimpleSuite) TestTCPRouterConfigErrors(c *check.C) {
+	file := s.adaptFile(c, "fixtures/router_errors.toml", struct{}{})
+	defer os.Remove(file)
+
+	cmd, output := s.traefikCmd(withConfigFile(file))
+	defer output(c)
+
+	err := cmd.Start()
+	c.Assert(err, checker.IsNil)
+	defer cmd.Process.Kill()
+
+	// router3 has an error because it uses an unknown entrypoint
+	err = try.GetRequest("http://127.0.0.1:8080/api/tcp/routers/router3@file", 1000*time.Millisecond, try.BodyContains(`entryPoint \"unknown-entrypoint\" doesn't exist`, "no valid entryPoint for this router"))
+	c.Assert(err, checker.IsNil)
+
+	// router4 has an unsupported Rule
+	err = try.GetRequest("http://127.0.0.1:8080/api/tcp/routers/router4@file", 1000*time.Millisecond, try.BodyContains("unknown rule Host(`mydomain.com`)"))
+	c.Assert(err, checker.IsNil)
+}
+
+func (s *SimpleSuite) TestTCPServiceConfigErrors(c *check.C) {
+	file := s.adaptFile(c, "fixtures/tcp/service_errors.toml", struct{}{})
+	defer os.Remove(file)
+
+	cmd, output := s.traefikCmd(withConfigFile(file))
+	defer output(c)
+
+	err := cmd.Start()
+	c.Assert(err, checker.IsNil)
+	defer cmd.Process.Kill()
+
+	err = try.GetRequest("http://127.0.0.1:8080/api/tcp/services", 1000*time.Millisecond, try.BodyContains(`["the service \"service1@file\" does not have any type defined"]`))
+	c.Assert(err, checker.IsNil)
+
+	err = try.GetRequest("http://127.0.0.1:8080/api/tcp/services/service1@file", 1000*time.Millisecond, try.BodyContains(`"status":"disabled"`))
+	c.Assert(err, checker.IsNil)
+
+	err = try.GetRequest("http://127.0.0.1:8080/api/tcp/services/service2@file", 1000*time.Millisecond, try.BodyContains(`"status":"enabled"`))
+	c.Assert(err, checker.IsNil)
+}
+
+func (s *SimpleSuite) TestUDPRouterConfigErrors(c *check.C) {
+	file := s.adaptFile(c, "fixtures/router_errors.toml", struct{}{})
+	defer os.Remove(file)
+
+	cmd, output := s.traefikCmd(withConfigFile(file))
+	defer output(c)
+
+	err := cmd.Start()
+	c.Assert(err, checker.IsNil)
+	defer cmd.Process.Kill()
+
+	err = try.GetRequest("http://127.0.0.1:8080/api/udp/routers/router3@file", 1000*time.Millisecond, try.BodyContains(`entryPoint \"unknown-entrypoint\" doesn't exist`, "no valid entryPoint for this router"))
+	c.Assert(err, checker.IsNil)
+}
+
+func (s *SimpleSuite) TestUDPServiceConfigErrors(c *check.C) {
+	file := s.adaptFile(c, "fixtures/udp/service_errors.toml", struct{}{})
+	defer os.Remove(file)
+
+	cmd, output := s.traefikCmd(withConfigFile(file))
+	defer output(c)
+
+	err := cmd.Start()
+	c.Assert(err, checker.IsNil)
+	defer cmd.Process.Kill()
+
+	err = try.GetRequest("http://127.0.0.1:8080/api/udp/services", 1000*time.Millisecond, try.BodyContains(`["the udp service \"service1@file\" does not have any type defined"]`))
+	c.Assert(err, checker.IsNil)
+
+	err = try.GetRequest("http://127.0.0.1:8080/api/udp/services/service1@file", 1000*time.Millisecond, try.BodyContains(`"status":"disabled"`))
+	c.Assert(err, checker.IsNil)
+
+	err = try.GetRequest("http://127.0.0.1:8080/api/udp/services/service2@file", 1000*time.Millisecond, try.BodyContains(`"status":"enabled"`))
+	c.Assert(err, checker.IsNil)
+}
+
 func (s *SimpleSuite) TestWRR(c *check.C) {
 	s.createComposeProject(c, "base")
 	s.composeProject.Start(c)
@@ -698,6 +776,129 @@ func (s *SimpleSuite) TestMirror(c *check.C) {
 	c.Assert(countTotal, checker.Equals, int32(10))
 	c.Assert(val1, checker.Equals, int32(1))
 	c.Assert(val2, checker.Equals, int32(5))
+}
+
+func (s *SimpleSuite) TestMirrorWithBody(c *check.C) {
+	var count, countMirror1, countMirror2 int32
+
+	body20 := make([]byte, 20)
+	_, err := rand.Read(body20)
+	c.Assert(err, checker.IsNil)
+
+	body5 := make([]byte, 5)
+	_, err = rand.Read(body5)
+	c.Assert(err, checker.IsNil)
+
+	verifyBody := func(req *http.Request) {
+		b, _ := ioutil.ReadAll(req.Body)
+		switch req.Header.Get("Size") {
+		case "20":
+			if !bytes.Equal(b, body20) {
+				c.Fatalf("Not Equals \n%v \n%v", body20, b)
+			}
+		case "5":
+			if !bytes.Equal(b, body5) {
+				c.Fatalf("Not Equals \n%v \n%v", body5, b)
+			}
+		default:
+			c.Fatal("Size header not present")
+		}
+	}
+
+	main := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		verifyBody(req)
+		atomic.AddInt32(&count, 1)
+	}))
+
+	mirror1 := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		verifyBody(req)
+		atomic.AddInt32(&countMirror1, 1)
+	}))
+
+	mirror2 := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		verifyBody(req)
+		atomic.AddInt32(&countMirror2, 1)
+	}))
+
+	mainServer := main.URL
+	mirror1Server := mirror1.URL
+	mirror2Server := mirror2.URL
+
+	file := s.adaptFile(c, "fixtures/mirror.toml", struct {
+		MainServer    string
+		Mirror1Server string
+		Mirror2Server string
+	}{MainServer: mainServer, Mirror1Server: mirror1Server, Mirror2Server: mirror2Server})
+	defer os.Remove(file)
+
+	cmd, output := s.traefikCmd(withConfigFile(file))
+	defer output(c)
+
+	err = cmd.Start()
+	c.Assert(err, checker.IsNil)
+	defer cmd.Process.Kill()
+
+	err = try.GetRequest("http://127.0.0.1:8080/api/http/services", 1000*time.Millisecond, try.BodyContains("mirror1", "mirror2", "service1"))
+	c.Assert(err, checker.IsNil)
+
+	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/whoami", bytes.NewBuffer(body20))
+	c.Assert(err, checker.IsNil)
+	req.Header.Set("Size", "20")
+	for i := 0; i < 10; i++ {
+		response, err := http.DefaultClient.Do(req)
+		c.Assert(err, checker.IsNil)
+		c.Assert(response.StatusCode, checker.Equals, http.StatusOK)
+	}
+
+	countTotal := atomic.LoadInt32(&count)
+	val1 := atomic.LoadInt32(&countMirror1)
+	val2 := atomic.LoadInt32(&countMirror2)
+
+	c.Assert(countTotal, checker.Equals, int32(10))
+	c.Assert(val1, checker.Equals, int32(1))
+	c.Assert(val2, checker.Equals, int32(5))
+
+	atomic.StoreInt32(&count, 0)
+	atomic.StoreInt32(&countMirror1, 0)
+	atomic.StoreInt32(&countMirror2, 0)
+
+	req, err = http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/whoamiWithMaxBody", bytes.NewBuffer(body5))
+	req.Header.Set("Size", "5")
+	c.Assert(err, checker.IsNil)
+	for i := 0; i < 10; i++ {
+		response, err := http.DefaultClient.Do(req)
+		c.Assert(err, checker.IsNil)
+		c.Assert(response.StatusCode, checker.Equals, http.StatusOK)
+	}
+
+	countTotal = atomic.LoadInt32(&count)
+	val1 = atomic.LoadInt32(&countMirror1)
+	val2 = atomic.LoadInt32(&countMirror2)
+
+	c.Assert(countTotal, checker.Equals, int32(10))
+	c.Assert(val1, checker.Equals, int32(1))
+	c.Assert(val2, checker.Equals, int32(5))
+
+	atomic.StoreInt32(&count, 0)
+	atomic.StoreInt32(&countMirror1, 0)
+	atomic.StoreInt32(&countMirror2, 0)
+
+	req, err = http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/whoamiWithMaxBody", bytes.NewBuffer(body20))
+	req.Header.Set("Size", "20")
+	c.Assert(err, checker.IsNil)
+	for i := 0; i < 10; i++ {
+		response, err := http.DefaultClient.Do(req)
+		c.Assert(err, checker.IsNil)
+		c.Assert(response.StatusCode, checker.Equals, http.StatusOK)
+	}
+
+	countTotal = atomic.LoadInt32(&count)
+	val1 = atomic.LoadInt32(&countMirror1)
+	val2 = atomic.LoadInt32(&countMirror2)
+
+	c.Assert(countTotal, checker.Equals, int32(10))
+	c.Assert(val1, checker.Equals, int32(0))
+	c.Assert(val2, checker.Equals, int32(0))
 }
 
 func (s *SimpleSuite) TestMirrorCanceled(c *check.C) {
