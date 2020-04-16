@@ -101,7 +101,7 @@ If you want to limit the router scope to a set of entry points, set the `entryPo
     [http.routers]
       [http.routers.Router-1]
         # By default, routers listen to every entry points
-        rule = "Host(`traefik.io`)"
+        rule = "Host(`example.com`)"
         service = "service-1"
     ```
     
@@ -111,7 +111,7 @@ If you want to limit the router scope to a set of entry points, set the `entryPo
       routers:
         Router-1:
           # By default, routers listen to every entry points
-          rule: "Host(`traefik.io`)"
+          rule: "Host(`example.com`)"
           service: "service-1"
     ```
     
@@ -156,7 +156,7 @@ If you want to limit the router scope to a set of entry points, set the `entryPo
       [http.routers.Router-1]
         # won't listen to entry point web
         entryPoints = ["websecure", "other"]
-        rule = "Host(`traefik.io`)"
+        rule = "Host(`example.com`)"
         service = "service-1"
     ```
     
@@ -169,7 +169,7 @@ If you want to limit the router scope to a set of entry points, set the `entryPo
           entryPoints:
             - "websecure"
             - "other"
-          rule: "Host(`traefik.io`)"
+          rule: "Host(`example.com`)"
           service: "service-1"
     ```
 
@@ -214,30 +214,30 @@ If the rule is verified, the router becomes active, calls middlewares, and then 
     
     Single quotes `'` are not accepted as values are [Golang's String Literals](https://golang.org/ref/spec#String_literals).
 
-!!! example "Host is traefik.io"
+!!! example "Host is example.com"
 
     ```toml
-    rule = "Host(`traefik.io`)"
+    rule = "Host(`example.com`)"
     ```
 
-!!! example "Host is traefik.io OR Host is containo.us AND path is /traefik"
+!!! example "Host is example.com OR Host is example.org AND path is /traefik"
 
     ```toml
-    rule = "Host(`traefik.io`) || (Host(`containo.us`) && Path(`/traefik`))"
+    rule = "Host(`example.com`) || (Host(`example.org`) && Path(`/traefik`))"
     ```
 
 The table below lists all the available matchers:
 
-| Rule                                                                 | Description                                                                                                    |
-|----------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------|
-| ```Headers(`key`, `value`)```                                        | Check if there is a key `key`defined in the headers, with the value `value`                                    |
-| ```HeadersRegexp(`key`, `regexp`)```                                 | Check if there is a key `key`defined in the headers, with a value that matches the regular expression `regexp` |
-| ```Host(`domain-1`, ...)```                                          | Check if the request domain targets one of the given `domains`.                                                |
-| ```HostRegexp(`traefik.io`, `{subdomain:[a-z]+}.traefik.io`, ...)``` | Check if the request domain matches the given `regexp`.                                                        |
-| ```Method(`GET`, ...)```                                             | Check if the request method is one of the given `methods` (`GET`, `POST`, `PUT`, `DELETE`, `PATCH`)            |
-| ```Path(`/path`, `/articles/{category}/{id:[0-9]+}`, ...)```         | Match exact request path. It accepts a sequence of literal and regular expression paths.                       |
-| ```PathPrefix(`/products/`, `/articles/{category}/{id:[0-9]+}`)```   | Match request prefix path. It accepts a sequence of literal and regular expression prefix paths.               |
-| ```Query(`foo=bar`, `bar=baz`)```                                    | Match Query String parameters. It accepts a sequence of key=value pairs.                                      |
+| Rule                                                                   | Description                                                                                                    |
+|------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------|
+| ```Headers(`key`, `value`)```                                          | Check if there is a key `key`defined in the headers, with the value `value`                                    |
+| ```HeadersRegexp(`key`, `regexp`)```                                   | Check if there is a key `key`defined in the headers, with a value that matches the regular expression `regexp` |
+| ```Host(`example.com`, ...)```                                         | Check if the request domain targets one of the given `domains`.                                                |
+| ```HostRegexp(`example.com`, `{subdomain:[a-z]+}.example.com`, ...)``` | Check if the request domain matches the given `regexp`.                                                        |
+| ```Method(`GET`, ...)```                                               | Check if the request method is one of the given `methods` (`GET`, `POST`, `PUT`, `DELETE`, `PATCH`)            |
+| ```Path(`/path`, `/articles/{category}/{id:[0-9]+}`, ...)```           | Match exact request path. It accepts a sequence of literal and regular expression paths.                       |
+| ```PathPrefix(`/products/`, `/articles/{category}/{id:[0-9]+}`)```     | Match request prefix path. It accepts a sequence of literal and regular expression prefix paths.               |
+| ```Query(`foo=bar`, `bar=baz`)```                                      | Match Query String parameters. It accepts a sequence of key=value pairs.                                       |
 
 !!! important "Regexp Syntax"
 
@@ -386,7 +386,7 @@ but there are exceptions for label-based providers.
 See the specific [docker](../providers/docker.md#service-definition), [rancher](../providers/rancher.md#service-definition),
 or [marathon](../providers/marathon.md#service-definition) documentation.
 
-!!! warning "The character `@` is not authorized in the middleware name."
+!!! warning "The character `@` is not authorized in the service name."
 
 !!! important "HTTP routers can only target HTTP services (not TCP services)."
 
@@ -580,7 +580,7 @@ http:
 ```
 
 !!! info "Multiple Hosts in a Rule"
-    The rule ```Host(`test1.traefik.io`,`test2.traefik.io`)``` will request a certificate with the main domain `test1.traefik.io` and SAN `test2.traefik.io`.
+    The rule ```Host(`test1.example.com`,`test2.example.com`)``` will request a certificate with the main domain `test1.example.com` and SAN `test2.example.com`.
 
 #### `domains`
 
@@ -654,7 +654,7 @@ If you want to limit the router scope to a set of entry points, set the entry po
     [tcp.routers]
       [tcp.routers.Router-1]
         # By default, routers listen to every entrypoints
-        rule = "HostSNI(`traefik.io`)"
+        rule = "HostSNI(`example.com`)"
         service = "service-1"
         # will route TLS requests (and ignore non tls requests)
         [tcp.routers.Router-1.tls]
@@ -667,7 +667,7 @@ If you want to limit the router scope to a set of entry points, set the entry po
       routers:
         Router-1:
           # By default, routers listen to every entrypoints
-          rule: "HostSNI(`traefik.io`)"
+          rule: "HostSNI(`example.com`)"
           service: "service-1"
           # will route TLS requests (and ignore non tls requests)
           tls: {}
@@ -716,7 +716,7 @@ If you want to limit the router scope to a set of entry points, set the entry po
       [tcp.routers.Router-1]
         # won't listen to entry point web
         entryPoints = ["websecure", "other"]
-        rule = "HostSNI(`traefik.io`)"
+        rule = "HostSNI(`example.com`)"
         service = "service-1"
         # will route TLS requests (and ignore non tls requests)
         [tcp.routers.Router-1.tls]
@@ -731,7 +731,7 @@ If you want to limit the router scope to a set of entry points, set the entry po
           entryPoints:
             - "websecure"
             - "other"
-          rule: "HostSNI(`traefik.io`)"
+          rule: "HostSNI(`example.com`)"
           service: "service-1"
           # will route TLS requests (and ignore non tls requests)
           tls: {}
@@ -795,11 +795,10 @@ Services are the target for the router.
 
 When a TLS section is specified,
 it instructs Traefik that the current router is dedicated to TLS requests only (and that the router should ignore non-TLS requests).
- 
-By default, Traefik will terminate the SSL connections (meaning that it will send decrypted data to the services),
-but Traefik can be configured in order to let the requests pass through (keeping the data encrypted), and be forwarded to the service "as is". 
 
-??? example "Configuring TLS Termination"
+By default, a router with a TLS section will terminate the TLS connections, meaning that it will send decrypted data to the services.
+
+??? example "Router for TLS requests"
 
     ```toml tab="File (TOML)"
     ## Dynamic configuration
@@ -821,6 +820,13 @@ but Traefik can be configured in order to let the requests pass through (keeping
           # will terminate the TLS request by default
           tls: {}
     ```
+
+#### `passthrough`
+
+As seen above, a TLS router will terminate the TLS connection by default.
+However, the `passthrough` option can be specified to set whether the requests should be forwarded "as is", keeping all data encrypted.
+
+It defaults to `false`.
 
 ??? example "Configuring passthrough"
 

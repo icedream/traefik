@@ -40,7 +40,7 @@ and [Docker Swarm Mode](https://docs.docker.com/engine/swarm/).
       my-container:
         # ...
         labels:
-          - traefik.http.routers.my-container.rule=Host(`mydomain.com`)
+          - traefik.http.routers.my-container.rule=Host(`example.com`)
     ```
 
 ??? example "Configuring Docker Swarm & Deploying / Exposing Services"
@@ -79,13 +79,13 @@ and [Docker Swarm Mode](https://docs.docker.com/engine/swarm/).
       my-container:
         deploy:
           labels:
-            - traefik.http.routers.my-container.rule=Host(`mydomain.com`)
+            - traefik.http.routers.my-container.rule=Host(`example.com`)
             - traefik.http.services.my-container-service.loadbalancer.server.port=8080
     ```
 
 ## Routing Configuration
 
-When using Docker as a [provider](https://docs.traefik.io/providers/overview/),
+When using Docker as a [provider](./overview.md),
 Traefik uses [container labels](https://docs.docker.com/engine/reference/commandline/run/#set-metadata-on-container--l---label---label-file) to retrieve its routing configuration.
 
 See the list of labels in the dedicated [routing](../routing/providers/docker.md) section.
@@ -261,7 +261,7 @@ See the sections [Docker API Access](#docker-api-access) and [Docker Swarm API A
 
     services:
       traefik:
-         image: traefik:v2.1 # The official v2 Traefik docker image
+         image: traefik:v2.2 # The official v2 Traefik docker image
          ports:
            - "80:80"
          volumes:
@@ -473,19 +473,19 @@ _Optional, Default=15_
 
 ```toml tab="File (TOML)"
 [providers.docker]
-  swarmModeRefreshSeconds = "30s"
+  swarmModeRefreshSeconds = 30
   # ...
 ```
 
 ```yaml tab="File (YAML)"
 providers:
   docker:
-    swarmModeRefreshSeconds: "30s"
+    swarmModeRefreshSeconds: 30
     # ...
 ```
 
 ```bash tab="CLI"
---providers.docker.swarmModeRefreshSeconds=30s
+--providers.docker.swarmModeRefreshSeconds=30
 # ...
 ```
 

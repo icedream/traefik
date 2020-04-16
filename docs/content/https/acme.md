@@ -79,7 +79,7 @@ Please check the [configuration examples below](#configuration-examples) for mor
         address = ":443"
     
     [certificatesResolvers.myresolver.acme]
-      email = "your-email@your-domain.org"
+      email = "your-email@example.com"
       storage = "acme.json"
       [certificatesResolvers.myresolver.acme.httpChallenge]
         # used during the challenge
@@ -97,7 +97,7 @@ Please check the [configuration examples below](#configuration-examples) for mor
     certificatesResolvers:
       myresolver:
         acme:
-          email: your-email@your-domain.org
+          email: your-email@example.com
           storage: acme.json
           httpChallenge:
             # used during the challenge
@@ -108,7 +108,7 @@ Please check the [configuration examples below](#configuration-examples) for mor
     --entryPoints.web.address=:80
     --entryPoints.websecure.address=:443
     # ...
-    --certificatesResolvers.myresolver.acme.email=your-email@your-domain.org
+    --certificatesResolvers.myresolver.acme.email=your-email@example.com
     --certificatesResolvers.myresolver.acme.storage=acme.json
     # used during the challenge
     --certificatesResolvers.myresolver.acme.httpChallenge.entryPoint=web
@@ -118,20 +118,20 @@ Please check the [configuration examples below](#configuration-examples) for mor
 
 ??? example "Single Domain from Router's Rule Example"
     
-    * A certificate for the domain `company.com` is requested:
+    * A certificate for the domain `example.com` is requested:
 
     --8<-- "content/https/include-acme-single-domain-example.md"
 
 ??? example "Multiple Domains from Router's Rule Example"
  
-    * A certificate for the domains `company.com` (main) and `blog.company.org`
+    * A certificate for the domains `example.com` (main) and `blog.example.org`
       is requested:
     
     --8<-- "content/https/include-acme-multiple-domains-from-rule-example.md"
     
 ??? example "Multiple Domains from Router's `tls.domain` Example"
 
-    * A certificate for the domains `company.com` (main) and `*.company.org` (SAN)
+    * A certificate for the domains `example.com` (main) and `*.example.org` (SAN)
       is requested:
       
     --8<-- "content/https/include-acme-multiple-domains-example.md"
@@ -301,6 +301,7 @@ For example, `CF_API_EMAIL_FILE=/run/secrets/traefik_cf-api-email` could be used
 | [DreamHost](https://www.dreamhost.com/)                     | `dreamhost`    | `DREAMHOST_API_KEY`                                                                                                                         | [Additional configuration](https://go-acme.github.io/lego/dns/dreamhost)    |
 | [Duck DNS](https://www.duckdns.org/)                        | `duckdns`      | `DUCKDNS_TOKEN`                                                                                                                             | [Additional configuration](https://go-acme.github.io/lego/dns/duckdns)      |
 | [Dyn](https://dyn.com)                                      | `dyn`          | `DYN_CUSTOMER_NAME`, `DYN_USER_NAME`, `DYN_PASSWORD`                                                                                        | [Additional configuration](https://go-acme.github.io/lego/dns/dyn)          |
+| [Dynu](https://www.dynu.com)                                | `dynu`         | `DYNU_API_KEY`                                                                                                                              | [Additional configuration](https://go-acme.github.io/lego/dns/dynu)         |
 | [EasyDNS](https://easydns.com/)                             | `easydns`      | `EASYDNS_TOKEN`, `EASYDNS_KEY`                                                                                                              | [Additional configuration](https://go-acme.github.io/lego/dns/easydns)      |
 | External Program                                            | `exec`         | `EXEC_PATH`                                                                                                                                 | [Additional configuration](https://go-acme.github.io/lego/dns/exec)         |
 | [Exoscale](https://www.exoscale.com)                        | `exoscale`     | `EXOSCALE_API_KEY`, `EXOSCALE_API_SECRET`, `EXOSCALE_ENDPOINT`                                                                              | [Additional configuration](https://go-acme.github.io/lego/dns/exoscale)     |
@@ -319,7 +320,7 @@ For example, `CF_API_EMAIL_FILE=/run/secrets/traefik_cf-api-email` could be used
 | [Linode](https://www.linode.com)                            | `linode`       | `LINODE_API_KEY`                                                                                                                            | [Additional configuration](https://go-acme.github.io/lego/dns/linode)       |
 | [Linode v4](https://www.linode.com)                         | `linodev4`     | `LINODE_TOKEN`                                                                                                                              | [Additional configuration](https://go-acme.github.io/lego/dns/linodev4)     |
 | [Liquid Web](https://www.liquidweb.com/)                    | `liquidweb`    | `LIQUID_WEB_PASSWORD`, `LIQUID_WEB_USERNAME`, `LIQUID_WEB_ZONE`                                                                             | [Additional configuration](https://go-acme.github.io/lego/dns/liquidweb)    |
-| manual                                                      | -              | none, but you need to run Traefik interactively [^4], turn on debug log to see instructions and press <kbd>Enter</kbd>.                     |                                                                             |
+| manual                                                      | `manual`       | none, but you need to run Traefik interactively [^4], turn on debug log to see instructions and press <kbd>Enter</kbd>.                     |                                                                             |
 | [MyDNS.jp](https://www.mydns.jp/)                           | `mydnsjp`      | `MYDNSJP_MASTER_ID`, `MYDNSJP_PASSWORD`                                                                                                     | [Additional configuration](https://go-acme.github.io/lego/dns/mydnsjp)      |
 | [Namecheap](https://www.namecheap.com)                      | `namecheap`    | `NAMECHEAP_API_USER`, `NAMECHEAP_API_KEY`                                                                                                   | [Additional configuration](https://go-acme.github.io/lego/dns/namecheap)    |
 | [name.com](https://www.name.com/)                           | `namedotcom`   | `NAMECOM_USERNAME`, `NAMECOM_API_TOKEN`, `NAMECOM_SERVER`                                                                                   | [Additional configuration](https://go-acme.github.io/lego/dns/namedotcom)   |
@@ -333,8 +334,10 @@ For example, `CF_API_EMAIL_FILE=/run/secrets/traefik_cf-api-email` could be used
 | [Oracle Cloud](https://cloud.oracle.com/home)               | `oraclecloud`  | `OCI_COMPARTMENT_OCID`, `OCI_PRIVKEY_FILE`, `OCI_PRIVKEY_PASS`, `OCI_PUBKEY_FINGERPRINT`, `OCI_REGION`, `OCI_TENANCY_OCID`, `OCI_USER_OCID` | [Additional configuration](https://go-acme.github.io/lego/dns/oraclecloud)  |
 | [PowerDNS](https://www.powerdns.com)                        | `pdns`         | `PDNS_API_KEY`, `PDNS_API_URL`                                                                                                              | [Additional configuration](https://go-acme.github.io/lego/dns/pdns)         |
 | [Rackspace](https://www.rackspace.com/cloud/dns)            | `rackspace`    | `RACKSPACE_USER`, `RACKSPACE_API_KEY`                                                                                                       | [Additional configuration](https://go-acme.github.io/lego/dns/rackspace)    |
+| [reg.ru](https://www.reg.ru)                                | `regru`        | `REGRU_USERNAME`, `REGRU_PASSWORD`                                                                                                          | [Additional configuration](https://go-acme.github.io/lego/dns/regru)        |
 | [RFC2136](https://tools.ietf.org/html/rfc2136)              | `rfc2136`      | `RFC2136_TSIG_KEY`, `RFC2136_TSIG_SECRET`, `RFC2136_TSIG_ALGORITHM`, `RFC2136_NAMESERVER`                                                   | [Additional configuration](https://go-acme.github.io/lego/dns/rfc2136)      |
 | [Route 53](https://aws.amazon.com/route53/)                 | `route53`      | `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `[AWS_REGION]`, `[AWS_HOSTED_ZONE_ID]` or a configured user/instance IAM profile.             | [Additional configuration](https://go-acme.github.io/lego/dns/route53)      |
+| [RimuHosting](https://rimuhosting.com)                      | `rimuhosting`  | `RIMUHOSTING_API_KEY`                                                                                                                       | [Additional configuration](https://go-acme.github.io/lego/dns/rimuhosting)  |
 | [Sakura Cloud](https://cloud.sakura.ad.jp/)                 | `sakuracloud`  | `SAKURACLOUD_ACCESS_TOKEN`, `SAKURACLOUD_ACCESS_TOKEN_SECRET`                                                                               | [Additional configuration](https://go-acme.github.io/lego/dns/sakuracloud)  |
 | [Scaleway](https://www.scaleway.com)                        | `scaleway`     | `SCALEWAY_API_TOKEN`                                                                                                                        | [Additional configuration](https://go-acme.github.io/lego/dns/scaleway)     |
 | [Selectel](https://selectel.ru/en/)                         | `selectel`     | `SELECTEL_API_TOKEN`                                                                                                                        | [Additional configuration](https://go-acme.github.io/lego/dns/selectel)     |
@@ -346,6 +349,7 @@ For example, `CF_API_EMAIL_FILE=/run/secrets/traefik_cf-api-email` could be used
 | [Vscale](https://vscale.io/)                                | `vscale`       | `VSCALE_API_TOKEN`                                                                                                                          | [Additional configuration](https://go-acme.github.io/lego/dns/vscale)       |
 | [VULTR](https://www.vultr.com)                              | `vultr`        | `VULTR_API_KEY`                                                                                                                             | [Additional configuration](https://go-acme.github.io/lego/dns/vultr)        |
 | [Zone.ee](https://www.zone.ee)                              | `zoneee`       | `ZONEEE_API_USER`, `ZONEEE_API_KEY`                                                                                                         | [Additional configuration](https://go-acme.github.io/lego/dns/zoneee)       |
+| [Zonomi](https://zonomi.com)                                | `zonomi`       | `ZONOMI_API_KEY`                                                                                                                            | [Additional configuration](https://go-acme.github.io/lego/dns/zonomi)       |
 
 [^1]: more information about the HTTP message format can be found [here](https://go-acme.github.io/lego/dns/httpreq/)
 [^2]: [providing_credentials_to_your_application](https://cloud.google.com/docs/authentication/production#providing_credentials_to_your_application)

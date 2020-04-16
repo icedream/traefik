@@ -43,7 +43,7 @@ The Kubernetes Ingress Controller, The Custom Resource Way.
           serviceAccountName: traefik-ingress-controller
           containers:
             - name: traefik
-              image: traefik:v2.1
+              image: traefik:v2.2
               args:
                 - --log.level=DEBUG
                 - --api
@@ -321,7 +321,7 @@ Register the `IngressRoute` [kind](../../reference/dynamic-configuration/kuberne
         - foo
       routes:                           # [2]
       - kind: Rule
-        match: Host(`test.domain.com`)  # [3]
+        match: Host(`test.example.com`) # [3]
         priority: 10                    # [4]
         middlewares:                    # [5]
         - name: middleware1             # [6]
@@ -349,31 +349,31 @@ Register the `IngressRoute` [kind](../../reference/dynamic-configuration/kuberne
           namespace: default            # [13]
         certResolver: foo               # [14]
         domains:                        # [15]
-        - main: foo.com                 # [16]
+        - main: example.net             # [16]
           sans:                         # [17]
-          - a.foo.com
-          - b.foo.com
+          - a.example.net
+          - b.example.net
     ```
 
-| Ref  | Attribute                  | Purpose                                                                                                                                                                     |
-|------|----------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| [1]  | `entryPoints`              | List of [entry points](../routers/index.md#entrypoints) names                                                                                                               |
-| [2]  | `routes`                   | List of routes                                                                                                                                                              |
-| [3]  | `routes[n].match`          | Defines the [rule](../routers/index.md#rule) corresponding to an underlying router.                                                                                         |
-| [4]  | `routes[n].priority`       | [Disambiguate](../routers/index.md#priority) rules of the same length, for route matching                                                                                   |
-| [5]  | `routes[n].middlewares`    | List of reference to [Middleware](#kind-middleware)                                                                                                                         |
-| [6]  | `middlewares[n].name`      | Defines the [Middleware](#kind-middleware) name                                                                                                                             |
-| [7]  | `middlewares[n].namespace` | Defines the [Middleware](#kind-middleware) namespace                                                                                                                        |
-| [8]  | `routes[n].services`       | List of any combination of [TraefikService](#kind-traefikservice) and reference to a [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/) |
-| [9]  | `tls`                      | Defines [TLS](../routers/index.md#tls) certificate configuration                                                                                                            |
-| [10] | `tls.secretName`           | Defines the [secret](https://kubernetes.io/docs/concepts/configuration/secret/) name used to store the certificate (in the `IngressRoute` namespace)                        |
-| [11] | `tls.options`              | Defines the reference to a [TLSOption](#kind-tlsoption)                                                                                                                     |
-| [12] | `options.name`             | Defines the [TLSOption](#kind-tlsoption) name                                                                                                                               |
-| [13] | `options.namespace`        | Defines the [TLSOption](#kind-tlsoption) namespace                                                                                                                          |
-| [14] | `tls.certResolver`          | Defines the reference to a [CertResolver](../routers/index.md#certresolver)                                                                                                 |
-| [15] | `tls.domains`              | List of [domains](../routers/index.md#domains)                                                                                                                              |
-| [16] | `domains[n].main`          | Defines the main domain name                                                                                                                                                |
-| [17] | `domains[n].sans`          | List of SANs (alternative domains)                                                                                                                                          |
+| Ref  | Attribute                  | Purpose                                                                                                                                                                                                                  |
+|------|----------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| [1]  | `entryPoints`              | List of [entry points](../routers/index.md#entrypoints) names                                                                                                                                                            |
+| [2]  | `routes`                   | List of routes                                                                                                                                                                                                           |
+| [3]  | `routes[n].match`          | Defines the [rule](../routers/index.md#rule) corresponding to an underlying router.                                                                                                                                      |
+| [4]  | `routes[n].priority`       | [Disambiguate](../routers/index.md#priority) rules of the same length, for route matching                                                                                                                                |
+| [5]  | `routes[n].middlewares`    | List of reference to [Middleware](#kind-middleware)                                                                                                                                                                      |
+| [6]  | `middlewares[n].name`      | Defines the [Middleware](#kind-middleware) name                                                                                                                                                                          |
+| [7]  | `middlewares[n].namespace` | Defines the [Middleware](#kind-middleware) namespace                                                                                                                                                                     |
+| [8]  | `routes[n].services`       | List of any combination of [TraefikService](#kind-traefikservice) and reference to a [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/) (See below for `ExternalName Service` setup) |
+| [9]  | `tls`                      | Defines [TLS](../routers/index.md#tls) certificate configuration                                                                                                                                                         |
+| [10] | `tls.secretName`           | Defines the [secret](https://kubernetes.io/docs/concepts/configuration/secret/) name used to store the certificate (in the `IngressRoute` namespace)                                                                     |
+| [11] | `tls.options`              | Defines the reference to a [TLSOption](#kind-tlsoption)                                                                                                                                                                  |
+| [12] | `options.name`             | Defines the [TLSOption](#kind-tlsoption) name                                                                                                                                                                            |
+| [13] | `options.namespace`        | Defines the [TLSOption](#kind-tlsoption) namespace                                                                                                                                                                       |
+| [14] | `tls.certResolver`         | Defines the reference to a [CertResolver](../routers/index.md#certresolver)                                                                                                                                              |
+| [15] | `tls.domains`              | List of [domains](../routers/index.md#domains)                                                                                                                                                                           |
+| [16] | `domains[n].main`          | Defines the main domain name                                                                                                                                                                                             |
+| [17] | `domains[n].sans`          | List of SANs (alternative domains)                                                                                                                                                                                       |
 
 ??? example "Declaring an IngressRoute"
 
@@ -389,7 +389,7 @@ Register the `IngressRoute` [kind](../../reference/dynamic-configuration/kuberne
         - web
       routes:
       - kind: Rule
-        match: Host(`test.domain.com`)
+        match: Host(`test.example.com`)
         middlewares:
         - name: middleware1
           namespace: default
@@ -413,10 +413,10 @@ Register the `IngressRoute` [kind](../../reference/dynamic-configuration/kuberne
       tls:
         certResolver: foo
         domains:
-        - main: foo.com
+        - main: example.net
           sans:
-          - a.foo.com
-          - b.foo.com
+          - a.example.net
+          - b.example.net
         options:
           name: opt
           namespace: default
@@ -467,6 +467,112 @@ Register the `IngressRoute` [kind](../../reference/dynamic-configuration/kuberne
     - Setting the kubernetes service port to use port 443 (https)
 
     If you do not configure the above, Traefik will assume an http connection.
+    
+
+!!! important "Using Kubernetes ExternalName Service"
+
+    Traefik backends creation needs a port to be set, however Kubernetes [ExternalName Service](https://kubernetes.io/fr/docs/concepts/services-networking/service/#externalname) could be defined without any port.
+    Accordingly, Traefik supports defining a port in two ways:
+    
+    - only on `IngressRoute` service
+    - on both sides, you'll be warned if the ports don't match, and the `IngressRoute` service port is used
+    
+    Thus, in case of two sides port definition, Traefik expects a match between ports.
+    
+    ??? example "Examples"
+        
+        ```yaml tab="IngressRoute"
+        ---
+        apiVersion: traefik.containo.us/v1alpha1
+        kind: IngressRoute
+        metadata:
+          name: test.route
+          namespace: default
+        
+        spec:
+          entryPoints:
+            - foo
+        
+          routes:
+          - match: Host(`example.net`)
+            kind: Rule
+            services:
+            - name: external-svc
+              port: 80
+        
+        ---
+        apiVersion: v1
+        kind: Service
+        metadata:
+          name: external-svc
+          namespace: default
+        spec:
+          externalName: external.domain
+          type: ExternalName
+        ```
+        
+        ```yaml tab="ExternalName Service"
+        ---
+        apiVersion: traefik.containo.us/v1alpha1
+        kind: IngressRoute
+        metadata:
+          name: test.route
+          namespace: default
+        
+        spec:
+          entryPoints:
+            - foo
+        
+          routes:
+          - match: Host(`example.net`)
+            kind: Rule
+            services:
+            - name: external-svc
+        
+        ---
+        apiVersion: v1
+        kind: Service
+        metadata:
+          name: external-svc
+          namespace: default
+        spec:
+          externalName: external.domain
+          type: ExternalName
+          ports:
+            - port: 80
+        ```
+        
+        ```yaml tab="Both sides"
+        ---
+        apiVersion: traefik.containo.us/v1alpha1
+        kind: IngressRoute
+        metadata:
+          name: test.route
+          namespace: default
+        
+        spec:
+          entryPoints:
+            - foo
+        
+          routes:
+          - match: Host(`example.net`)
+            kind: Rule
+            services:
+            - name: external-svc
+              port: 80
+        
+        ---
+        apiVersion: v1
+        kind: Service
+        metadata:
+          name: external-svc
+          namespace: default
+        spec:
+          externalName: external.domain
+          type: ExternalName
+          ports:
+            - port: 80
+        ```
 
 ### Kind: `Middleware`
 
@@ -499,7 +605,7 @@ Register the `Middleware` [kind](../../reference/dynamic-configuration/kubernete
       entryPoints:
         - web
       routes:
-      - match: Host(`bar.com`) && PathPrefix(`/stripit`)
+      - match: Host(`example.com`) && PathPrefix(`/stripit`)
         kind: Rule
         services:
         - name: whoami
@@ -540,7 +646,6 @@ referencing services in the [`IngressRoute`](#kind-ingressroute) objects, or rec
 * services [Weighted Round Robin](#weighted-round-robin) load balancing.
 * services [mirroring](#mirroring).
 
-
 #### Server Load Balancing
 
 More information in the dedicated server [load balancing](../services/index.md#load-balancing) section.
@@ -558,7 +663,7 @@ More information in the dedicated server [load balancing](../services/index.md#l
       entryPoints:
         - web
       routes:
-      - match: Host(`bar.com`) && PathPrefix(`/foo`)
+      - match: Host(`example.com`) && PathPrefix(`/foo`)
         kind: Rule
         services:
         - name: svc1
@@ -614,7 +719,7 @@ More information in the dedicated [Weighted Round Robin](../services/index.md#we
       entryPoints:
         - web
       routes:
-      - match: Host(`bar.com`) && PathPrefix(`/foo`)
+      - match: Host(`example.com`) && PathPrefix(`/foo`)
         kind: Rule
         services:
         - name: wrr1
@@ -721,7 +826,7 @@ More information in the dedicated [mirroring](../services/index.md#mirroring-ser
       entryPoints:
         - web
       routes:
-      - match: Host(`bar.com`) && PathPrefix(`/foo`)
+      - match: Host(`example.com`) && PathPrefix(`/foo`)
         kind: Rule
         services:
         - name: mirror1
@@ -810,6 +915,154 @@ More information in the dedicated [mirroring](../services/index.md#mirroring-ser
     
     Specifying a namespace attribute in this case would not make any sense, and will be ignored (except if the provider is `kubernetescrd`).
 
+#### Stickiness and load-balancing
+
+As explained in the section about [Sticky sessions](../../services/#sticky-sessions), for stickiness to work all the way,
+it must be specified at each load-balancing level.
+
+For instance, in the example below, there is a first level of load-balancing because there is a (Weighted Round Robin) load-balancing of the two `whoami` services,
+and there is a second level because each whoami service is a `replicaset` and is thus handled as a load-balancer of servers.
+
+??? "Stickiness on two load-balancing levels"
+
+    ```yaml tab="IngressRoute"
+    apiVersion: traefik.containo.us/v1alpha1
+    kind: IngressRoute
+    metadata:
+      name: ingressroutebar
+      namespace: default
+
+    spec:
+      entryPoints:
+        - web
+      routes:
+      - match: Host(`example.com`) && PathPrefix(`/foo`)
+        kind: Rule
+        services:
+        - name: wrr1
+          namespace: default
+          kind: TraefikService
+    ```
+
+    ```yaml tab="Weighted Round Robin"
+    apiVersion: traefik.containo.us/v1alpha1
+    kind: TraefikService
+    metadata:
+      name: wrr1
+      namespace: default
+
+    spec:
+      weighted:
+        services:
+          - name: whoami1
+            kind: Service
+            port: 80
+            weight: 1
+            sticky:
+              cookie:
+                name: lvl2
+          - name: whoami2
+            kind: Service
+            weight: 1
+            port: 80
+            sticky:
+              cookie:
+                name: lvl2
+        sticky:
+          cookie:
+            name: lvl1
+    ```
+
+    ```yaml tab="K8s Service"
+    apiVersion: v1
+    kind: Service
+    metadata:
+      name: whoami1
+
+    spec:
+      ports:
+        - protocol: TCP
+          name: web
+          port: 80
+      selector:
+        app: whoami1
+
+    ---
+    apiVersion: v1
+    kind: Service
+    metadata:
+      name: whoami2
+
+    spec:
+      ports:
+        - protocol: TCP
+          name: web
+          port: 80
+      selector:
+        app: whoami2
+    ```
+
+    ```yaml tab="Deployment (to illustrate replicas)"
+    kind: Deployment
+    apiVersion: apps/v1
+    metadata:
+      namespace: default
+      name: whoami1
+      labels:
+        app: whoami1
+
+    spec:
+      replicas: 2
+      selector:
+        matchLabels:
+          app: whoami1
+      template:
+        metadata:
+          labels:
+            app: whoami1
+        spec:
+          containers:
+            - name: whoami1
+              image: containous/whoami
+              ports:
+                - name: web
+                  containerPort: 80
+
+    ---
+    kind: Deployment
+    apiVersion: apps/v1
+    metadata:
+      namespace: default
+      name: whoami2
+      labels:
+        app: whoami2
+
+    spec:
+      replicas: 2
+      selector:
+        matchLabels:
+          app: whoami2
+      template:
+        metadata:
+          labels:
+            app: whoami2
+        spec:
+          containers:
+            - name: whoami2
+              image: containous/whoami
+              ports:
+                - name: web
+                  containerPort: 80
+    ```
+
+    To keep a session open with the same server, the client would then need to specify the two levels within the cookie for each request, e.g. with curl:
+
+    ```bash
+    curl -H Host:example.com -b "lvl1=default-whoami1-80; lvl2=http://10.42.0.6:80" http://localhost:8000/foo
+    ```
+
+    assuming `10.42.0.6` is the IP address of one of the replicas (a pod then) of the `whoami1` service.
+
 ### Kind `IngressRouteTCP`
 
 `IngressRouteTCP` is the CRD implementation of a [Traefik TCP router](../routers/index.md#configuring-tcp-routers).
@@ -841,10 +1094,10 @@ Register the `IngressRouteTCP` [kind](../../reference/dynamic-configuration/kube
           namespace: default        # [13]
         certResolver: foo           # [14]
         domains:                    # [15]
-        - main: foo.com             # [16]
+        - main: example.net         # [16]
           sans:                     # [17]
-          - a.foo.com
-          - b.foo.com
+          - a.example.net
+          - b.example.net
         passthrough: false          # [18]
     ```
 
@@ -853,7 +1106,7 @@ Register the `IngressRouteTCP` [kind](../../reference/dynamic-configuration/kube
 | [1]  | `entryPoints`                  | List of [entrypoints](../routers/index.md#entrypoints_1) names                                                                                                                                                                                                                                                                                                                           |
 | [2]  | `routes`                       | List of routes                                                                                                                                                                                                                                                                                                                                                                           |
 | [3]  | `routes[n].match`              | Defines the [rule](../routers/index.md#rule_1) corresponding to an underlying router                                                                                                                                                                                                                                                                                                     |
-| [4]  | `routes[n].services`           | List of [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/) definitions                                                                                                                                                                                                                                                                               |
+| [4]  | `routes[n].services`           | List of [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/) definitions  (See below for `ExternalName Service` setup)                                                                                                                                                                                                                                 |
 | [5]  | `services[n].name`             | Defines the name of a [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/)                                                                                                                                                                                                                                                                             |
 | [6]  | `services[n].port`             | Defines the port of a [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/)                                                                                                                                                                                                                                                                             |
 | [7]  | `services[n].weight`           | Defines the weight to apply to the server load balancing                                                                                                                                                                                                                                                                                                                                 |
@@ -895,10 +1148,10 @@ Register the `IngressRouteTCP` [kind](../../reference/dynamic-configuration/kube
       tls:
         certResolver: foo
         domains:
-        - main: foo.com
+        - main: example.net
           sans:
-          - a.foo.com
-          - b.foo.com
+          - a.example.net
+          - b.example.net
         options:
           name: opt
           namespace: default
@@ -927,6 +1180,111 @@ Register the `IngressRouteTCP` [kind](../../reference/dynamic-configuration/kube
       tls.crt: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCi0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0=
       tls.key: LS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0tCi0tLS0tRU5EIFBSSVZBVEUgS0VZLS0tLS0=
     ```
+
+!!! important "Using Kubernetes ExternalName Service"
+
+    Traefik backends creation needs a port to be set, however Kubernetes [ExternalName Service](https://kubernetes.io/fr/docs/concepts/services-networking/service/#externalname) could be defined without any port.
+    Accordingly, Traefik supports defining a port in two ways:
+    
+    - only on `IngressRouteTCP` service
+    - on both sides, you'll be warned if the ports don't match, and the `IngressRouteTCP` service port is used
+    
+    Thus, in case of two sides port definition, Traefik expects a match between ports.
+    
+    ??? example "Examples"
+        
+        ```yaml tab="IngressRouteTCP"
+        ---
+        apiVersion: traefik.containo.us/v1alpha1
+        kind: IngressRouteTCP
+        metadata:
+          name: test.route
+          namespace: default
+        
+        spec:
+          entryPoints:
+            - foo
+        
+          routes:
+          - match: HostSNI(`*`)
+            kind: Rule
+            services:
+            - name: external-svc
+              port: 80
+        
+        ---
+        apiVersion: v1
+        kind: Service
+        metadata:
+          name: external-svc
+          namespace: default
+        spec:
+          externalName: external.domain
+          type: ExternalName
+        ```
+        
+        ```yaml tab="ExternalName Service"
+        ---
+        apiVersion: traefik.containo.us/v1alpha1
+        kind: IngressRouteTCP
+        metadata:
+          name: test.route
+          namespace: default
+        
+        spec:
+          entryPoints:
+            - foo
+        
+          routes:
+          - match: HostSNI(`*`)
+            kind: Rule
+            services:
+            - name: external-svc
+        
+        ---
+        apiVersion: v1
+        kind: Service
+        metadata:
+          name: external-svc
+          namespace: default
+        spec:
+          externalName: external.domain
+          type: ExternalName
+          ports:
+            - port: 80
+        ```
+        
+        ```yaml tab="Both sides"
+        ---
+        apiVersion: traefik.containo.us/v1alpha1
+        kind: IngressRouteTCP
+        metadata:
+          name: test.route
+          namespace: default
+        
+        spec:
+          entryPoints:
+            - foo
+        
+          routes:
+          - match: HostSNI(`*`)
+            kind: Rule
+            services:
+            - name: external-svc
+              port: 80
+        
+        ---
+        apiVersion: v1
+        kind: Service
+        metadata:
+          name: external-svc
+          namespace: default
+        spec:
+          externalName: external.domain
+          type: ExternalName
+          ports:
+            - port: 80
+        ```
 
 ### Kind `IngressRouteUDP`
 
@@ -981,7 +1339,7 @@ Register the `IngressRouteUDP` [kind](../../reference/dynamic-configuration/kube
           port: 8081
           weight: 10
     ```
-    
+
 ### Kind: `TLSOption`
 
 `TLSOption` is the CRD implementation of a [Traefik "TLS Option"](../../https/tls.md#tls-options).
@@ -1058,7 +1416,7 @@ or referencing TLS options in the [`IngressRoute`](#kind-ingressroute) / [`Ingre
       entryPoints:
         - web
       routes:
-      - match: Host(`bar.com`) && PathPrefix(`/stripit`)
+      - match: Host(`example.com`) && PathPrefix(`/stripit`)
         kind: Rule
         services:
         - name: whoami
@@ -1155,7 +1513,7 @@ or referencing TLS stores in the [`IngressRoute`](#kind-ingressroute) / [`Ingres
       entryPoints:
         - web
       routes:
-      - match: Host(`bar.com`) && PathPrefix(`/stripit`)
+      - match: Host(`example.com`) && PathPrefix(`/stripit`)
         kind: Rule
         services:
         - name: whoami
@@ -1175,6 +1533,7 @@ or referencing TLS stores in the [`IngressRoute`](#kind-ingressroute) / [`Ingres
       tls.crt: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCi0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0=
       tls.key: LS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0tCi0tLS0tRU5EIFBSSVZBVEUgS0VZLS0tLS0=
     ```
+
 ## Further
 
 Also see the [full example](../../user-guides/crd-acme/index.md) with Let's Encrypt.

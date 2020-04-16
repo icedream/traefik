@@ -40,7 +40,7 @@ metadata:
 
 spec:
   rules:
-    - host: foo.com
+    - host: example.net
       http:
         paths:
           - path: /bar
@@ -266,7 +266,7 @@ _Optional, Default: empty_
 
 ```toml tab="File (TOML)"
 [providers.kubernetesIngress.ingressEndpoint]
-  hostname = "foo.com"
+  hostname = "example.net"
   # ...
 ```
 
@@ -274,12 +274,12 @@ _Optional, Default: empty_
 providers:
   kubernetesIngress:
     ingressEndpoint:
-      hostname: "foo.com"
+      hostname: "example.net"
     # ...
 ```
 
 ```bash tab="CLI"
---providers.kubernetesingress.ingressendpoint.hostname=foo.com
+--providers.kubernetesingress.ingressendpoint.hostname=example.net
 ```
 
 Hostname used for Kubernetes Ingress endpoints.
@@ -357,7 +357,7 @@ providers:
 ### Further
 
 If one wants to know more about the various aspects of the Ingress spec that Traefik supports,
-many examples of Ingresses definitions are located in the tests [data](https://github.com/containous/traefik/tree/v2.1/pkg/provider/kubernetes/ingress/fixtures) of the Traefik repository.
+many examples of Ingresses definitions are located in the tests [data](https://github.com/containous/traefik/tree/v2.2/pkg/provider/kubernetes/ingress/fixtures) of the Traefik repository.
 
 ## LetsEncrypt Support with the Ingress Provider
 

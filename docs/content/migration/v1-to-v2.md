@@ -97,14 +97,14 @@ Then any router can refer to an instance of the wanted middleware.
 
     ```yaml tab="Docker"
     labels:
-      - "traefik.http.routers.router0.rule=Host(`bar.com`) && PathPrefix(`/test`)"
+      - "traefik.http.routers.router0.rule=Host(`example.com`) && PathPrefix(`/test`)"
       - "traefik.http.routers.router0.middlewares=auth"
       - "traefik.http.middlewares.auth.basicauth.users=test:$$apr1$$H6uskkkW$$IgXLP6ewTrSuBkTrqE8wj/,test2:$$apr1$$d9hr9HBB$$4HxwgUir3HP4EsggP/QNo0"
     ```
 
     ```yaml tab="K8s IngressRoute"
     # The definitions below require the definitions for the Middleware and IngressRoute kinds.
-    # https://docs.traefik.io/v2.1/reference/dynamic-configuration/kubernetes-crd/#definitions
+    # https://docs.traefik.io/v2.2/reference/dynamic-configuration/kubernetes-crd/#definitions
     apiVersion: traefik.containo.us/v1alpha1
     kind: Middleware
     metadata:
@@ -225,7 +225,7 @@ Then, a [router's TLS field](../routing/routers/index.md#tls) can refer to one o
     # dynamic configuration
     [http.routers]
       [http.routers.Router-1]
-        rule = "Host(`bar.com`)"
+        rule = "Host(`example.com`)"
         service = "service-id"
         # will terminate the TLS request
         [http.routers.Router-1.tls]
@@ -252,7 +252,7 @@ Then, a [router's TLS field](../routing/routers/index.md#tls) can refer to one o
     http:
       routers:
         Router-1:
-          rule: "Host(`bar.com`)"
+          rule: "Host(`example.com`)"
           service: service-id
           # will terminate the TLS request
           tls:
@@ -275,7 +275,7 @@ Then, a [router's TLS field](../routing/routers/index.md#tls) can refer to one o
 
     ```yaml tab="K8s IngressRoute"
     # The definitions below require the definitions for the TLSOption and IngressRoute kinds.
-    # https://docs.traefik.io/v2.1/reference/dynamic-configuration/kubernetes-crd/#definitions
+    # https://docs.traefik.io/v2.2/reference/dynamic-configuration/kubernetes-crd/#definitions
     apiVersion: traefik.containo.us/v1alpha1
     kind: TLSOption
     metadata:
@@ -301,7 +301,7 @@ Then, a [router's TLS field](../routing/routers/index.md#tls) can refer to one o
       entryPoints:
         - web
       routes:
-        - match: Host(`bar.com`)
+        - match: Host(`example.com`)
           kind: Rule
           services:
             - name: whoami
@@ -322,9 +322,12 @@ Then, a [router's TLS field](../routing/routers/index.md#tls) can refer to one o
 ## HTTP to HTTPS Redirection is Now Configured on Routers
 
 Previously on Traefik v1, the redirection was applied on an entry point or on a frontend.
-With Traefik v2 it is applied on a [Router](../routing/routers/index.md). 
+With Traefik v2 it is applied on an entry point or a [Router](../routing/routers/index.md). 
 
-To apply a redirection, one of the redirect middlewares, [RedirectRegex](../middlewares/redirectregex.md) or [RedirectScheme](../middlewares/redirectscheme.md), has to be configured and added to the router middlewares list.
+To apply a redirection:
+
+- on an entry point, the [HTTP redirection](../routing/entrypoints.md#redirection) has to be configured.
+- on a router, one of the redirect middlewares, [RedirectRegex](../middlewares/redirectregex.md) or [RedirectScheme](../middlewares/redirectscheme.md), has to be configured and added to the router middlewares list.
 
 !!! example "Global HTTP to HTTPS redirection"
 
@@ -352,90 +355,28 @@ To apply a redirection, one of the redirect middlewares, [RedirectRegex](../midd
 
     !!! info "v2"
     
-    ```yaml tab="Docker"
-    # ...
-      traefik:
-        image: traefik:v2.1
-        command:
-          - --entrypoints.web.address=:80
-          - --entrypoints.websecure.address=:443
-          - --providers.docker=true
-        ports:
-          - 80:80
-          - 443:443
-        labels:
-          traefik.http.routers.http_catchall.rule: HostRegexp(`{any:.+}`)
-          traefik.http.routers.http_catchall.entrypoints: web
-          traefik.http.routers.http_catchall.middlewares: https_redirect
-          traefik.http.middlewares.https_redirect.redirectscheme.scheme: https
-          traefik.http.middlewares.https_redirect.redirectscheme.permanent: true
-        volumes:
-          - /var/run/docker.sock:/var/run/docker.sock
-    ```
+    ```bash tab="CLI"
+    ## static configuration
     
-    ```yaml tab="K8s IngressRoute"
-    # The entry points web (port 80) and websecure (port 443) must be defined the static configuration.
-    apiVersion: traefik.containo.us/v1alpha1
-    kind: IngressRoute
-    metadata:
-      name: http_catchall
-      namespace: traefik
-    spec:
-      entryPoints:
-        - web
-      routes:
-        - match: HostRegexp(`{any:.+}`)
-          kind: Rule
-          services:
-            # the noop service will be never called
-            - name: noop@internal
-          middlewares:
-            - name: https_redirect
-              # if the Middleware has distinct namespace
-              namespace: traefik
-    
-    ---
-    apiVersion: traefik.containo.us/v1alpha1
-    kind: Middleware 
-    metadata:
-      name: https_redirect
-      namespace: traefik
-    spec:
-      redirectScheme:
-        scheme: https
-        permanent: true
+    --entrypoints.web.address=:80
+    --entrypoints.web.http.redirections.entrypoint.to=websecure
+    --entrypoints.web.http.redirections.entrypoint.scheme=https
+    --entrypoints.websecure.address=:443
+    --providers.docker=true
     ```
     
     ```toml tab="File (TOML)"
     # traefik.toml
     ## static configuration
     
-    [entryPoints]
-      [entryPoints.web]
-        address = 80
-      [entryPoints.websecure]
-        address = 443
-    
-    [providers.file]
-      directory = "/dynamic/"
-    
-    ##--------------------##
-    
-    # /dynamic/redirect.toml
-    ## dynamic configuration
-    
-    [http.routers]
-      [http.routers.http_catchall]
-        entryPoints = ["web"]
-        middlewares = ["https_redirect"]
-        rule = "HostRegexp(`{any:.+}`)"
-        # the noop service will be never called
-        service = "noop@internal"
-    
-    [http.middlewares]
-      [http.middlewares.https_redirect.redirectScheme]
+    [entryPoints.web]
+      address = 80
+      [entryPoints.web.http.redirections.entryPoint]
+        to = "websecure"
         scheme = "https"
-        permanent = true
+   
+    [entryPoints.websecure]
+      address = 443
     ```
     
     ```yaml tab="File (YAML)"
@@ -445,34 +386,14 @@ To apply a redirection, one of the redirect middlewares, [RedirectRegex](../midd
     entryPoints:
       web:
         address: 80
+        http:
+          redirections:
+            entrypoint:
+              to: websecure
+              scheme: https
+    
       websecure:
         address: 443
-    
-    providers:
-      file:
-        directory: /dynamic/
-    
-    ##--------------------##
-    
-    # /dynamic/redirect.yml
-    ## dynamic configuration
-    
-    http:
-      routers:
-        http_catchall:
-          entryPoints:
-            - web
-          middlewares:
-            - https_redirect
-          rule: "HostRegexp(`{any:.+}`)"
-          # the noop service will be never called
-          service: noop@internal
-    
-      middlewares:
-        https_redirect:
-          redirectScheme:
-            scheme: https
-            permanent: true
     ```
 
 !!! example "HTTP to HTTPS redirection per domain"
@@ -480,37 +401,35 @@ To apply a redirection, one of the redirect middlewares, [RedirectRegex](../midd
     !!! info "v1"
     
     ```toml tab="File (TOML)"
-    # static configuration
-    defaultEntryPoints = ["web", "websecure"]
-    
     [entryPoints]
       [entryPoints.web]
         address = ":80"
-        [entryPoints.web.redirect]
-          entryPoint = "websecure"
 
       [entryPoints.websecure]
         address = ":443"
         [entryPoints.websecure.tls]
-          [[entryPoints.websecure.tls.certificates]]
-            certFile = "examples/traefik.crt"
-            keyFile = "examples/traefik.key"
-    ```
-
-    ```bash tab="CLI"
-    --entrypoints=Name:web Address::80 Redirect.EntryPoint:websecure
-    --entryPoints='Name:websecure Address::443 TLS:path/to/my.cert,path/to/my.key'
+    
+    [file]
+    
+    [frontends]
+      [frontends.frontend1]
+        entryPoints = ["web", "websecure"]
+        [frontends.frontend1.routes]
+          [frontends.frontend1.routes.route0]
+            rule = "Host:example.net"
+        [frontends.frontend1.redirect]
+          entryPoint = "websecure"
     ```
 
     !!! info "v2"
 
     ```yaml tab="Docker"
     labels:
-      traefik.http.routers.app.rule: Host(`foo.com`)
+      traefik.http.routers.app.rule: Host(`example.net`)
       traefik.http.routers.app.entrypoints: web
       traefik.http.routers.app.middlewares: https_redirect
     
-      traefik.http.routers.appsecured.rule: Host(`foo.com`)
+      traefik.http.routers.appsecured.rule: Host(`example.net`)
       traefik.http.routers.appsecured.entrypoints: websecure
       traefik.http.routers.appsecured.tls: true
     
@@ -528,7 +447,7 @@ To apply a redirection, one of the redirect middlewares, [RedirectRegex](../midd
       entryPoints:
         - web
       routes:
-        - match: Host(`foo.com`)
+        - match: Host(`example.net`)
           kind: Rule
           services:
             - name: whoami
@@ -565,69 +484,36 @@ To apply a redirection, one of the redirect middlewares, [RedirectRegex](../midd
     ```
 
     ```toml tab="File (TOML)"
-    ## static configuration
-    # traefik.toml
-    
-    [entryPoints.web]
-      address = ":80"
-    
-    [entryPoints.websecure]
-      address = ":443"
-    
-    ##---------------------##
-    
     ## dynamic configuration
     # dynamic-conf.toml
     
     [http.routers]
       [http.routers.router0]
-        rule = "Host(`foo.com`)"
+        rule = "Host(`example.net`)"
         service = "my-service"
         entrypoints = ["web"]
         middlewares = ["https_redirect"]
     
     [http.routers.router1]
-        rule = "Host(`foo.com`)"
+        rule = "Host(`example.net`)"
         service = "my-service"
         entrypoints = ["websecure"]
         [http.routers.router1.tls]
-        
-    [http.services]
-      [[http.services.my-service.loadBalancer.servers]]
-        url = "http://10.10.10.1:80"
-      [[http.services.my-service.loadBalancer.servers]]
-        url = "http://10.10.10.2:80"
     
     [http.middlewares]
       [http.middlewares.https_redirect.redirectScheme]
         scheme = "https"
         permanent = true
-    
-    [[tls.certificates]]
-      certFile = "/path/to/domain.cert"
-      keyFile = "/path/to/domain.key"
     ```
 
     ```yaml tab="File (YAML)"
-    ## static configuration
-    # traefik.yml
-    
-    entryPoints:
-      web:
-        address: ":80"
-    
-      websecure:
-        address: ":443"
-    
-    ##---------------------##
-    
     ## dynamic configuration
     # dynamic-conf.yml
     
     http:
       routers:
         router0:
-          rule: "Host(`foo.com`)"
+          rule: "Host(`example.net`)"
           entryPoints:
             - web
           middlewares:
@@ -635,29 +521,17 @@ To apply a redirection, one of the redirect middlewares, [RedirectRegex](../midd
           service: my-service
     
         router1:
-          rule: "Host(`foo.com`)"
+          rule: "Host(`example.net`)"
           entryPoints:
             - websecure
           service: my-service
           tls: {}
-    
-      services:
-        my-service:
-          loadBalancer:
-            servers:
-              - url: http://10.10.10.1:80
-              - url: http://10.10.10.2:80
     
       middlewares:
         https_redirect:
           redirectScheme:
             scheme: https
             permanent: true
-    
-    tls:
-      certificates:
-        - certFile: /app/certs/server/server.pem
-          keyFile: /app/certs/server/server.pem
     ```
 
 ## Strip and Rewrite Path Prefixes
@@ -667,11 +541,11 @@ With the new core notions of v2 (introduced earlier in the section
 transforming the URL path prefix of incoming requests is configured with [middlewares](../middlewares/overview.md),
 after the routing step with [router rule `PathPrefix`](../routing/routers/index.md#rule).
 
-Use Case: Incoming requests to `http://company.org/admin` are forwarded to the webapplication "admin",
+Use Case: Incoming requests to `http://example.org/admin` are forwarded to the webapplication "admin",
 with the path `/admin` stripped, e.g. to `http://<IP>:<port>/`. In this case, you must:
 
-* First, configure a router named `admin` with a rule matching at least the path prefix with the `PathPrefix` keyword,
-* Then, define a middleware of type [`stripprefix`](../middlewares/stripprefix.md), which removes the prefix `/admin`, associated to the router `admin`.
+- First, configure a router named `admin` with a rule matching at least the path prefix with the `PathPrefix` keyword,
+- Then, define a middleware of type [`stripprefix`](../middlewares/stripprefix.md), which removes the prefix `/admin`, associated to the router `admin`.
 
 !!! example "Strip Path Prefix When Forwarding to Backend"
 
@@ -679,7 +553,7 @@ with the path `/admin` stripped, e.g. to `http://<IP>:<port>/`. In this case, yo
 
     ```yaml tab="Docker"
     labels:
-      - "traefik.frontend.rule=Host:company.org;PathPrefixStrip:/admin"
+      - "traefik.frontend.rule=Host:example.org;PathPrefixStrip:/admin"
     ```
 
     ```yaml tab="Kubernetes Ingress"
@@ -692,7 +566,7 @@ with the path `/admin` stripped, e.g. to `http://<IP>:<port>/`. In this case, yo
         traefik.ingress.kubernetes.io/rule-type: PathPrefixStrip
     spec:
       rules:
-      - host: company.org
+      - host: example.org
         http:
           paths:
           - path: /admin
@@ -704,14 +578,14 @@ with the path `/admin` stripped, e.g. to `http://<IP>:<port>/`. In this case, yo
     ```toml tab="File (TOML)"
     [frontends.admin]
       [frontends.admin.routes.admin_1]
-      rule = "Host:company.org;PathPrefixStrip:/admin"
+      rule = "Host:example.org;PathPrefixStrip:/admin"
     ```
 
     !!! info "v2"
 
     ```yaml tab="Docker"
     labels:
-      - "traefik.http.routers.admin.rule=Host(`company.org`) && PathPrefix(`/admin`)"
+      - "traefik.http.routers.admin.rule=Host(`example.org`) && PathPrefix(`/admin`)"
       - "traefik.http.routers.admin.middlewares=admin-stripprefix"
       - "traefik.http.middlewares.admin-stripprefix.stripprefix.prefixes=/admin"
     ```
@@ -727,7 +601,7 @@ with the path `/admin` stripped, e.g. to `http://<IP>:<port>/`. In this case, yo
       entryPoints:
         - web
       routes:
-        - match: Host(`company.org`) && PathPrefix(`/admin`)
+        - match: Host(`example.org`) && PathPrefix(`/admin`)
           kind: Rule
           services:
             - name: admin-svc
@@ -749,7 +623,7 @@ with the path `/admin` stripped, e.g. to `http://<IP>:<port>/`. In this case, yo
     # dynamic-conf.toml
 
     [http.routers.router1]
-        rule = "Host(`company.org`) && PathPrefix(`/admin`)"
+        rule = "Host(`example.org`) && PathPrefix(`/admin`)"
         service = "admin-svc"
         entrypoints = ["web"]
         middlewares = ["admin-stripprefix"]
@@ -772,7 +646,7 @@ with the path `/admin` stripped, e.g. to `http://<IP>:<port>/`. In this case, yo
           service: admin-svc
           middlewares:
             - "admin-stripprefix"
-          rule: "Host(`company.org`) && PathPrefix(`/admin`)"
+          rule: "Host(`example.org`) && PathPrefix(`/admin`)"
 
       middlewares:
         admin-stripprefix:
@@ -787,10 +661,10 @@ with the path `/admin` stripped, e.g. to `http://<IP>:<port>/`. In this case, yo
 
     Instead of removing the path prefix with the [`stripprefix` middleware](../../middlewares/stripprefix/), you can also:
 
-    * Add a path prefix with the [`addprefix` middleware](../../middlewares/addprefix/)
-    * Replace the complete path of the request with the [`replacepath` middleware](../../middlewares/replacepath/)
-    * ReplaceRewrite path using Regexp with the [`replacepathregex` middleware](../../middlewares/replacepathregex/)
-    * And a lot more on the [`middlewares` page](../../middlewares/overview/)
+    - Add a path prefix with the [`addprefix` middleware](../../middlewares/addprefix/)
+    - Replace the complete path of the request with the [`replacepath` middleware](../../middlewares/replacepath/)
+    - ReplaceRewrite path using Regexp with the [`replacepathregex` middleware](../../middlewares/replacepathregex/)
+    - And a lot more on the [`middlewares` page](../../middlewares/overview/)
 
 ## ACME (LetsEncrypt)
 
@@ -813,23 +687,22 @@ with the path `/admin` stripped, e.g. to `http://<IP>:<port>/`. In this case, yo
       [entryPoints.websecure.tls]
     
     [acme]
-      email = "your-email-here@my-awesome-app.org"
+      email = "your-email-here@example.com"
       storage = "acme.json"
       entryPoint = "websecure"
       onHostRule = true
-      [acme.httpChallenge]
-        entryPoint = "web"
+      [acme.tlsChallenge]
     ```
 
     ```bash tab="CLI"
     --defaultentrypoints=websecure,web
     --entryPoints=Name:web Address::80 Redirect.EntryPoint:websecure
     --entryPoints=Name:websecure Address::443 TLS
-    --acme.email=your-email-here@my-awesome-app.org
+    --acme.email=your-email-here@example.com
     --acme.storage=acme.json
     --acme.entryPoint=websecure
     --acme.onHostRule=true
-    --acme.httpchallenge.entrypoint=http
+    --acme.tlschallenge=true
     ```
 
     !!! info "v2"
@@ -842,13 +715,13 @@ with the path `/admin` stripped, e.g. to `http://<IP>:<port>/`. In this case, yo
     
       [entryPoints.websecure]
         address = ":443"
+      [entryPoints.websecure.http.tls]
+        certResolver = "myresolver"
     
     [certificatesResolvers.myresolver.acme]
-      email = "your-email@your-domain.org"
+      email = "your-email@example.com"
       storage = "acme.json"
-      [certificatesResolvers.myresolver.acme.httpChallenge]
-        # used during the challenge
-        entryPoint = "web"
+      [certificatesResolvers.myresolver.acme.tlsChallenge]
     ```
 
     ```yaml tab="File (YAML)"
@@ -858,23 +731,24 @@ with the path `/admin` stripped, e.g. to `http://<IP>:<port>/`. In this case, yo
     
       websecure:
         address: ":443"
+        http:
+          tls:
+            certResolver: myresolver
     
     certificatesResolvers:
       myresolver:
         acme:
-          email: your-email@your-domain.org
+          email: your-email@example.com
           storage: acme.json
-          httpChallenge:
-            # used during the challenge
-            entryPoint: web
+          tlsChallenge: {}
     ```
 
     ```bash tab="CLI"
-    --entryPoints.web.address=:80
-    --entryPoints.websecure.address=:443
-    --certificatesResolvers.myresolver.acme.email=your-email@your-domain.org
-    --certificatesResolvers.myresolver.acme.storage=acme.json
-    --certificatesResolvers.myresolver.acme.httpChallenge.entryPoint=web
+    --entrypoints.web.address=:80
+    --entrypoints.websecure.address=:443
+    --certificatesresolvers.myresolver.acme.email=your-email@example.com
+    --certificatesresolvers.myresolver.acme.storage=acme.json
+    --certificatesresolvers.myresolver.acme.tlschallenge=true
     ```
 
 ## Traefik Logs
@@ -1123,14 +997,11 @@ Each root item has been moved to a related section or removed.
 ## Dashboard
 
 You need to activate the API to access the [dashboard](../operations/dashboard.md).
-As the dashboard access is now secured by default you can either:
 
-* define a  [specific router](../operations/api.md#configuration) with the `api@internal` service and one authentication middleware like the following example
-* or use the [insecure](../operations/api.md#insecure) option of the API
+To activate the dashboard, you can either:
 
-!!! info "Dashboard with k8s and dedicated router"
-
-    As `api@internal` is not a Kubernetes service, you have to use the file provider or the `insecure` API option.
+- use the [secure mode](../operations/dashboard.md#secure-mode) with the `api@internal` service like in the following examples
+- or use the [insecure mode](../operations/api.md#insecure)
 
 !!! example "Activate and access the dashboard"
 
@@ -1164,7 +1035,7 @@ As the dashboard access is now secured by default you can either:
     # dynamic configuration
     labels:
       - "traefik.http.routers.api.rule=Host(`traefik.docker.localhost`)"
-      - "traefik.http.routers.api.entrypoints=websecured"
+      - "traefik.http.routers.api.entrypoints=websecure"
       - "traefik.http.routers.api.service=api@internal"
       - "traefik.http.routers.api.middlewares=myAuth"
       - "traefik.http.routers.api.tls"
@@ -1242,28 +1113,28 @@ As the dashboard access is now secured by default you can either:
 
 Supported [providers](../providers/overview.md), for now:
 
-* [ ] Azure Service Fabric
-* [x] Consul
-* [x] Consul Catalog
-* [x] Docker
-* [ ] DynamoDB
-* [ ] ECS
-* [x] Etcd
-* [ ] Eureka
-* [x] File
-* [x] Kubernetes Ingress (without annotations)
-* [x] Kubernetes IngressRoute
-* [x] Marathon
-* [ ] Mesos
-* [x] Rancher
-* [x] Redis
-* [x] Rest
-* [x] Zookeeper
+- [ ] Azure Service Fabric
+- [x] Consul
+- [x] Consul Catalog
+- [x] Docker
+- [ ] DynamoDB
+- [ ] ECS
+- [x] Etcd
+- [ ] Eureka
+- [x] File
+- [x] Kubernetes Ingress
+- [x] Kubernetes IngressRoute
+- [x] Marathon
+- [ ] Mesos
+- [x] Rancher
+- [x] Redis
+- [x] Rest
+- [x] Zookeeper
 
 ## Some Tips You Should Know
 
-* Different sources of static configuration (file, CLI flags, ...) cannot be [mixed](../getting-started/configuration-overview.md#the-static-configuration).
-* Now, configuration elements can be referenced between different providers by using the provider namespace notation: `@<provider>`.
+- Different sources of static configuration (file, CLI flags, ...) cannot be [mixed](../getting-started/configuration-overview.md#the-static-configuration).
+- Now, configuration elements can be referenced between different providers by using the provider namespace notation: `@<provider>`.
   For instance, a router named `myrouter` in a File Provider can refer to a service named `myservice` defined in Docker Provider with the following notation: `myservice@docker`.
-* Middlewares are applied in the same order as their declaration in router.
-* If you have any questions feel free to join our [community forum](https://community.containo.us).
+- Middlewares are applied in the same order as their declaration in router.
+- If you have any questions feel free to join our [community forum](https://community.containo.us).
